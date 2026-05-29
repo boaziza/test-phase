@@ -4,7 +4,7 @@
     .setEndpoint("https://fra.cloud.appwrite.io/v1")
     .setProject("69de2ba3003855a6c17c");
 
-  const BASE = "/testing_projects";
+  const BASE = "/test-phase";
 
   window._AW = {
     client,

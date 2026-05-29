@@ -140,7 +140,7 @@
       const btn      = this.querySelector('button[type="submit"]');
       btn.disabled   = true;
       const email    = document.getElementById("resetEmail").value.trim();
-      const resetUrl = `${window.location.origin}/testing_projects/auth/reset-password.html`;
+      const resetUrl = `${window.location.origin}/test-phase/auth/reset-password.html`;
       try {
         await _AW.account.createRecovery(email, resetUrl);
         alert("Reset link sent — check your email.");
