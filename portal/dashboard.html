@@ -591,45 +591,28 @@
               <table class="indices-table">
                 <thead>
                   <tr>
-                    <th>P</th><th>POMPE N°</th><th>Fin journée</th><th>Début journée</th>
-                    <th>Essence (L)</th><th>Gasoil (L)</th><th>Kérosène (L)</th>
+                    <th>#</th><th>Pump</th><th>Nozzle</th><th>Fuel</th>
+                    <th>End</th><th>Start</th><th>Sold (L)</th>
                   </tr>
                 </thead>
+                <tbody id="er-nozzleReadingsBody">
+                  <!-- populated by emp-report.js -->
+                </tbody>
                 <tbody>
                   <tr>
-                    <td>P1</td><td>Pump 1</td>
-                    <td><span id="er-pms2"></span></td><td><span id="er-pms1"></span></td>
-                    <td><span id="er-p1_essence"></span></td><td><span id="er-p1_gasoil">-</span></td><td><span id="er-p1_kero">-</span></td>
-                  </tr>
-                  <tr>
-                    <td>P2</td><td>Pump 2</td>
-                    <td><span id="er-pms4"></span></td><td><span id="er-pms3"></span></td>
-                    <td><span id="er-p2_essence"></span></td><td><span id="er-p2_gasoil">-</span></td><td><span id="er-p2_kero">-</span></td>
-                  </tr>
-                  <tr>
-                    <td>P3</td><td>Pump 3</td>
-                    <td><span id="er-ago2"></span></td><td><span id="er-ago1"></span></td>
-                    <td><span id="er-p3_essence">-</span></td><td><span id="er-p3_gasoil"></span></td><td><span id="er-p3_kero">-</span></td>
-                  </tr>
-                  <tr>
-                    <td>P4</td><td>Pump 4</td>
-                    <td><span id="er-ago4"></span></td><td><span id="er-ago3"></span></td>
-                    <td><span id="er-p4_essence">-</span></td><td><span id="er-p4_gasoil"></span></td><td><span id="er-p4_kero">-</span></td>
-                  </tr>
-                  <tr>
-                    <td></td><td></td><td></td><td>Total litres Sold (A)</td>
+                    <td colspan="4">Total litres Sold (A)</td>
                     <td><span id="er-venteLitresPms"></span></td><td><span id="er-venteLitresAgo"></span></td><td><span id="er-venteLitresKerosene">-</span></td>
                   </tr>
                   <tr>
-                    <td></td><td></td><td></td><td>Price (B)</td>
+                    <td colspan="4">Price (B)</td>
                     <td><span id="er-pmsPrices"></span></td><td><span id="er-agoPrices"></span></td><td><span id="er-kerosenePrice">-</span></td>
                   </tr>
                   <tr>
-                    <td></td><td></td><td></td><td>Total Sales in Frws (AxB)</td>
+                    <td colspan="4">Total Sales in Frws (AxB)</td>
                     <td><span id="er-totalPms"></span></td><td><span id="er-totalAgo"></span></td><td><span id="er-totalKerosene">-</span></td>
                   </tr>
                   <tr>
-                    <td></td><td></td><td></td><td>Total Sales (FRW)</td>
+                    <td colspan="4">Total Sales (FRW)</td>
                     <td><span id="er-totalVente"></span></td><td></td><td></td>
                   </tr>
                 </tbody>

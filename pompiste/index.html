@@ -52,65 +52,18 @@
         <div class="form-side">
             <div class="section-title">Pump Index</div>
             <form action="" id="rapportForm">
-
-                <!-- PMS / Essence -->
-                <div class="fuel-group pms-group">
-                    <div class="fuel-group-label">Essence (PMS) — Pumps P1 &amp; P2</div>
-                    <div class="pump-row">
-                        <span class="pump-id">P1</span>
-                        <label>Start</label>
-                        <input type="number" name="pms" id="pms1">
-                        <label>End</label>
-                        <input type="number" name="pms" id="pms2">
-                    </div>
-                    <div class="pump-row">
-                        <span class="pump-id">P2</span>
-                        <label>Start</label>
-                        <input type="number" name="pms" id="pms3">
-                        <label>End</label>
-                        <input type="number" name="pms" id="pms4">
-                    </div>
+                <!-- Nozzle inputs rendered dynamically by index.js -->
+                <div id="nozzleInputsContainer">
+                    <div class="fuel-loading">Loading pumps…</div>
                 </div>
-
-                <!-- AGO / Mazout -->
-                <div class="fuel-group ago-group">
-                    <div class="fuel-group-label">Mazout (AGO) — Pumps P3 &amp; P4</div>
-                    <div class="pump-row">
-                        <span class="pump-id">P3</span>
-                        <label>Start</label>
-                        <input type="number" name="ago" id="ago1">
-                        <label>End</label>
-                        <input type="number" name="ago" id="ago2">
-                    </div>
-                    <div class="pump-row">
-                        <span class="pump-id">P4</span>
-                        <label>Start</label>
-                        <input type="number" name="ago" id="ago3">
-                        <label>End</label>
-                        <input type="number" name="ago" id="ago4">
-                    </div>
-                </div>
-
             </form>
 
             <div style="padding: 0 16px 12px;">
                 <button class="action-btn" onclick="this.disabled=true; calculateIndex().finally(() => this.disabled=false)">Calculate Index</button>
             </div>
 
-            <div class="result-cards">
-                <div class="result-card pms-card">
-                    <div class="result-label">PMS Sales</div>
-                    <div class="result-value output" id="resultpms">—</div>
-                </div>
-                <div class="result-card ago-card">
-                    <div class="result-label">AGO Sales</div>
-                    <div class="result-value output" id="resultago">—</div>
-                </div>
-                <div class="result-card total-card">
-                    <div class="result-label">Total Vente</div>
-                    <div class="result-value output" id="result">—</div>
-                </div>
-            </div>
+            <!-- Result cards rendered dynamically by index.js -->
+            <div class="result-cards" id="indexResultCards"></div>
         </div>
 
         <!-- RIGHT: PAYMENTS -->
