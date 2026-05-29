@@ -2,7 +2,7 @@
 (function () {
   const client = new Appwrite.Client()
     .setEndpoint("https://fra.cloud.appwrite.io/v1")
-    .setProject("69de2ba3003855a6c17c");
+    .setProject("68a9b3e90029e6a10ff5");
 
   const BASE = "/test-phase";
 
