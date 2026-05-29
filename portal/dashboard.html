@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Rapport Pompiste</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231b263b'/><text x='16' y='23' text-anchor='middle' font-family='Arial' font-weight='900' font-size='16' fill='white'>RP</text></svg>">
+</head>
+<body style="visibility:hidden;">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">RP</div>
+      <div>
+        <div class="sidebar-brand-name">Rapport Pompiste</div>
+        <div class="sidebar-brand-role" id="sidebarRole">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Station view banner — only visible when owner is viewing a station -->
+    <div id="stationViewBanner" style="display:none;">
+      <div id="stationViewName"></div>
+      <button id="exitStationViewBtn">Exit Station View</button>
+    </div>
+
+    <nav class="sidebar-nav">
+
+      <div class="nav-section-label">General</div>
+
+      <a href="#" class="nav-item active" data-section="overview" data-roles="owner,manager">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Overview
+      </a>
+
+      <a href="#" class="nav-item" data-section="stations" data-roles="owner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        Stations
+      </a>
+
+      <a href="#" class="nav-item" data-section="managers" data-roles="owner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Managers
+      </a>
+
+      <a href="#" class="nav-item" data-section="pompistes" data-roles="manager">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Pompistes
+      </a>
+
+      <div class="nav-section-label" data-roles="manager">Operations</div>
+
+      <a href="#" class="nav-item" data-section="situation" data-roles="manager">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 6v6l4 2"/></svg>
+        Situation
+      </a>
+
+      <a href="#" class="nav-item" data-section="stock" data-roles="manager">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+        Stock
+      </a>
+
+      <a href="#" class="nav-item" data-section="report" data-roles="manager">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Report
+      </a>
+
+      <!-- <a href="#" class="nav-item" data-section="logs" data-roles="manager">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        Server Logs
+      </a> -->
+
+      <a href="#" class="nav-item" data-section="emp-report" data-roles="manager">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        Employee Report
+      </a>
+
+      <div class="nav-section-label">Account</div>
+
+      <a href="#" class="nav-item" data-section="settings" data-roles="owner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M20 12h2M2 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+        Settings
+      </a>
+
+      <a href="#" class="nav-item" data-section="account" data-roles="manager">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Account
+      </a>
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="userAvatar">?</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">Loading…</div>
+          <!-- owner sees company name; manager sees station name -->
+          <div class="sidebar-user-company" id="userContext">—</div>
+        </div>
+      </div>
+      <button class="sidebar-logout" id="logoutBtn">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main-content">
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         OVERVIEW  (owner + manager)
+         Stats differ per role — built by JS
+    ───────────────────────────────────────────────────────────────────────── -->
+    <section id="section-overview" class="section active" data-roles="owner,manager">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title" id="overviewTitle">Good morning</h1>
+          <p class="section-sub" id="overviewSub">—</p>
+        </div>
+      </div>
+      <div class="stats-grid" id="overviewStats"></div>
+      <div id="overviewCharts"></div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         STATIONS  (owner only)
+    ───────────────────────────────────────────────────────────────────────── -->
+    <section id="section-stations" class="section" style="display:none;" data-roles="owner">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title">Stations</h1>
+          <p class="section-sub">Manage your company's gas stations.</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer;">
+            <input type="checkbox" id="showArchivedToggle"> Show Archived
+          </label>
+          <button class="btn-primary" id="addStationBtn">+ Add Station</button>
+        </div>
+      </div>
+      <div id="stationsList" class="stations-grid">
+        <div class="loading-state">Loading…</div>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         MANAGERS  (owner only)
+    ───────────────────────────────────────────────────────────────────────── -->
+    <section id="section-managers" class="section" style="display:none;" data-roles="owner">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title">Managers</h1>
+          <p class="section-sub">Assign managers to your stations.</p>
+        </div>
+        <button class="btn-primary" id="addManagerBtn">+ Add Manager</button>
+      </div>
+      <div id="managersList" class="table-wrap">
+        <div class="loading-state">Loading…</div>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         POMPISTES  (manager only)
+    ───────────────────────────────────────────────────────────────────────── -->
+    <section id="section-pompistes" class="section" style="display:none;" data-roles="manager">
+      <div id="pompistesList" class="table-wrap">
+        <div class="loading-state">Loading…</div>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         SITUATION  (owner + manager)
+         Daily reconciliation — owner sees a station picker,
+         manager is scoped to their station automatically.
+    ───────────────────────────────────────────────────────────────────────── -->
+    <section id="section-situation" class="section" style="display:none;" data-roles="owner,manager">
+
+      <!-- ── TWO-COLUMN LAYOUT ── -->
+      <div class="situation-layout">
+
+        <!-- ── SIDEBAR ── -->
+        <aside class="sit-sidebar">
+          <div class="sit-sidebar-head">
+            <div class="sit-sidebar-title">Situation Journal</div>
+            <div class="sit-sidebar-sub">Select a date to view</div>
+          </div>
+
+          <!-- Mini Calendar -->
+          <div class="cal-section">
+            <div class="cal-nav">
+              <button aria-label="Previous month" onclick="this.disabled=true; changeCalMonth(-1).finally(()=>this.disabled=false)">‹</button>
+              <span id="calMonthLabel" aria-live="polite">—</span>
+              <button aria-label="Next month" onclick="this.disabled=true; changeCalMonth(1).finally(()=>this.disabled=false)">›</button>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div class="cal-legend">
+              <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--pms)"></div>Done</div>
+              <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--navy-light)"></div>Pending</div>
+              <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#dde3ee"></div>No data</div>
+            </div>
+          </div>
+
+          <!-- Recent Records List -->
+          <div class="recent-label">Recent Records</div>
+          <div class="recent-list" id="recentList">
+            <div class="list-loading">Loading…</div>
+          </div>
+        </aside>
+
+        <!-- ── MAIN CONTENT ── -->
+        <main class="sit-main" id="sitMain">
+
+          <div class="sit-main-bar">
+            <div class="loaded-date" id="loadedDate">Loading most recent…</div>
+            <div class="main-bar-actions">
+              <span class="done-pill" id="donePill"></span>
+              <button class="action-btn btn-sit-edit"   id="sitEditBtn"   style="display:none;" onclick="window._sit.enterEditMode()">✏ Edit</button>
+              <button class="action-btn btn-sit-cancel" id="sitCancelBtn" style="display:none;" onclick="window._sit.exitEditMode()">Cancel</button>
+              <button class="action-btn btn-sit-save"   id="sitSaveBtn"   style="display:none;" onclick="this.disabled=true; window._sit.saveEdit(this).finally(()=>this.disabled=false)">Save</button>
+              <button class="action-btn btn-download-main" id="sitDownloadBtn" onclick="this.disabled=true; window._sit.download().finally(()=>this.disabled=false)">⬇ Download PDF</button>
+            </div>
+          </div>
+
+          <div class="sheet">
+            <div class="sheet-title">Situation Report — <span id="sheetDate">—</span></div>
+
+            <section class="indices">
+              <table class="indices-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Pump</th>
+                    <th>Nozzle</th>
+                    <th>Fuel</th>
+                    <th>End</th>
+                    <th>Start</th>
+                    <th>Sold (L)</th>
+                  </tr>
+                </thead>
+                <tbody id="nozzleReadingsBody">
+                  <!-- populated by situation.js -->
+                </tbody>
+                <tbody>
+                  <tr>
+                    <td colspan="4">Total litres (A)</td>
+                    <td><span id="litresAPms"></span></td><td><span id="litresAAgo"></span></td><td><span id="litresAKerosene">-</span></td>
+                  </tr>
+                  <tr>
+                    <td colspan="4">Fuel Transferred (B)</td>
+                    <td><span id="transferedPms">-</span></td><td><span id="transferedAgo">-</span></td><td><span id="transferedKerosene">-</span></td>
+                  </tr>
+                  <tr>
+                    <td colspan="4">Total litres Sold (C=A-B)</td>
+                    <td><span id="litresCPms"></span></td><td><span id="litresCAgo"></span></td><td><span id="litresCKerosene">-</span></td>
+                  </tr>
+                  <tr>
+                    <td colspan="4">Price (D)</td>
+                    <td><span id="pmsPrices"></span></td><td><span id="agoPrices"></span></td><td><span id="kerosenePrice">-</span></td>
+                  </tr>
+                  <tr>
+                    <td colspan="4">Total Sales in Frws (CxD)</td>
+                    <td><span id="totalPms"></span></td><td><span id="totalAgo"></span></td><td><span id="totalKerosene">-</span></td>
+                  </tr>
+                  <tr>
+                    <td colspan="4">Total Sales (FRW)</td>
+                    <td><span id="totalVente"></span></td><td></td><td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+
+            <section class="totals-and-payments">
+              <div class="payments">
+                <h3>Payments</h3>
+                <div class="pay-row"><label>Total Payments:</label><span id="totalPayments"></span></div>
+                <div class="pay-row"><label>MoMo:</label><span id="momo"></span></div>
+                <div class="pay-row"><label>MoMo Loss:</label><span id="momoLoss"></span></div>
+                <div class="pay-row"><label>SP Fuel Card:</label><span id="spFuelCard"></span></div>
+                <div class="pay-row"><label>Bank Card:</label><span id="bankCard"></span></div>
+                <div class="pay-row"><label>Total Fiche:</label><span id="totalFiche"></span></div>
+                <div class="pay-row"><label>Bon:</label><span id="bon"></span></div>
+                <div class="pay-row"><label>Total Cash:</label><span id="totalCash"></span></div>
+              </div>
+            </section>
+
+            <section class="stocks">
+              <h3>Stocks de cuves</h3>
+              <table class="stocks-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Jauge début X (L)</th>
+                    <th>Réceptions Y (L)</th>
+                    <th>Ventes A (L)</th>
+                    <th>Transferts B (L)</th>
+                    <th>Theory Stock Z</th>
+                    <th>Physical Stock Q</th>
+                    <th>Gain/Loss</th>
+                    <th>Overall Gain/Loss</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>ESSENCE</td>
+                    <td><span id="initialPms"></span></td>
+                    <td><span id="receivedPms"></span></td>
+                    <td><span id="venteLitresPmsStock"></span></td>
+                    <td><span id="transferedStockPms">-</span></td>
+                    <td><span id="theoryStockPms"></span></td>
+                    <td><span id="physicalStockPms"></span></td>
+                    <td><span id="gainFuelPms"></span></td>
+                    <td><span id="totalGainFuelPms"></span></td>
+                  </tr>
+                  <tr>
+                    <td>MAZOUT</td>
+                    <td><span id="initialAgo"></span></td>
+                    <td><span id="receivedAgo"></span></td>
+                    <td><span id="venteLitresAgoStock"></span></td>
+                    <td><span id="transferedStockAgo">-</span></td>
+                    <td><span id="theoryStockAgo"></span></td>
+                    <td><span id="physicalStockAgo"></span></td>
+                    <td><span id="gainFuelAgo"></span></td>
+                    <td><span id="totalGainFuelAgo"></span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+
+            <div class="meta-row">Done: <span id="done">—</span></div>
+
+          </div><!-- /.sheet -->
+        </main>
+
+      </div><!-- /.situation-layout -->
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         STOCK  (manager only)
+         Daily and monthly stock entry for the assigned station.
+    ───────────────────────────────────────────────────────────────────────── -->
+    <section id="section-stock" class="section" style="display:none;" data-roles="manager">
+      
+      <!-- ── STOCK WRAPPER ── -->
+      <div class="stock-wrapper">
+
+        <!-- TABS -->
+        <div class="stock-tabs">
+          <button class="stock-tab-btn active" onclick="window._stock.switchStockTab('submit', this)">Submit Stock</button>
+          <button class="stock-tab-btn"        onclick="window._stock.switchStockTab('history', this)">Stock History</button>
+        </div>
+
+        <!-- TAB: SUBMIT STOCK -->
+        <div id="stock-tab-submit">
+          <form id="stockForm">
+
+            <div class="stock-date-bar">
+              <label for="logDate">Date</label>
+              <input type="date" name="logDate" id="logDate">
+            </div>
+
+            <div class="fuel-sections">
+
+              <!-- ESSENCE / PMS -->
+              <div class="fuel-section pms-section">
+                <div class="fuel-section-title pms-title">Essence (PMS)</div>
+                <div class="stock-field">
+                  <label for="initialPms">Jauge Debut (L)</label>
+                  <input type="number" name="initialPms" id="initialPms">
+                </div>
+                <div class="stock-field">
+                  <label>Ventes Litres</label>
+                  <span class="output" id="venteLitresPms">—</span>
+                </div>
+                <div class="stock-field">
+                  <label for="receivedPms">Received (L)</label>
+                  <input type="number" name="receivedPms" id="receivedPms">
+                </div>
+                <div class="stock-field">
+                  <label for="physicalStockPms">Physical Stock (L)</label>
+                  <input type="number" name="physicalStockPms" id="physicalStockPms">
+                </div>
+                <div class="stock-field">
+                  <label>Theory Stock (L)</label>
+                  <span class="output" id="theoryStockPms">—</span>
+                </div>
+                <div class="stock-field gain-field">
+                  <label>Gain / Loss (L)</label>
+                  <span class="output gain-value" id="gainFuelPms">—</span>
+                </div>
+              </div>
+
+              <!-- MAZOUT / AGO -->
+              <div class="fuel-section ago-section">
+                <div class="fuel-section-title ago-title">Mazout (AGO)</div>
+                <div class="stock-field">
+                  <label for="initialAgo">Jauge Debut (L)</label>
+                  <input type="number" name="initialAgo" id="initialAgo">
+                </div>
+                <div class="stock-field">
+                  <label>Ventes Litres</label>
+                  <span class="output" id="venteLitresAgo">—</span>
+                </div>
+                <div class="stock-field">
+                  <label for="receivedAgo">Received (L)</label>
+                  <input type="number" name="receivedAgo" id="receivedAgo">
+                </div>
+                <div class="stock-field">
+                  <label for="physicalStockAgo">Physical Stock (L)</label>
+                  <input type="number" name="physicalStockAgo" id="physicalStockAgo">
+                </div>
+                <div class="stock-field">
+                  <label>Theory Stock (L)</label>
+                  <span class="output" id="theoryStockAgo">—</span>
+                </div>
+                <div class="stock-field gain-field">
+                  <label>Gain / Loss (L)</label>
+                  <span class="output gain-value" id="gainFuelAgo">—</span>
+                </div>
+              </div>
+
+            </div><!-- /fuel-sections -->
+          </form>
+
+          <div class="stock-actions">
+            <button class="btn-primary" type="button" onclick="this.disabled=true; window._stock.stock().finally(() => this.disabled=false)">Calculate Stock</button>
+            <button class="btn-store"   onclick="openDialog('confirmStorePopup')">Store Stock</button>
+            <button class="btn-secondary-stock" onclick="this.disabled=true; window._stock.download().finally(() => this.disabled=false)">Download PDF</button>
+          </div>
+        </div><!-- /stock-tab-submit -->
+
+        <!-- TAB: STOCK HISTORY -->
+        <div id="stock-tab-history" style="display:none;">
+          <div class="history-split">
+
+            <!-- Sidebar: calendar + entry list -->
+            <aside class="hist-sidebar">
+              <div class="hist-sidebar-head">
+                <div class="hist-sidebar-title">Stock History</div>
+                <div class="hist-sidebar-sub">Select a date to view details</div>
+              </div>
+              <div class="hist-cal-section">
+                <div class="hist-cal-nav">
+                  <button onclick="window._stock._calPrev()">&#8249;</button>
+                  <span id="histCalMonthLabel"></span>
+                  <button onclick="window._stock._calNext()">&#8250;</button>
+                </div>
+                <div class="hist-cal-grid" id="histCalGrid"></div>
+                <div class="hist-cal-legend">
+                  <span class="hist-legend-dot"></span> Has stock entry
+                </div>
+              </div>
+              <div class="hist-list-label">Recent Entries</div>
+              <div class="hist-entry-list" id="histEntryList">
+                <div class="hist-list-empty">Loading…</div>
+              </div>
+            </aside>
+
+            <!-- Detail panel -->
+            <div class="hist-detail" id="histDetail">
+              <div class="hist-detail-placeholder">
+                <div class="hist-placeholder-icon">&#128197;</div>
+                <div class="hist-placeholder-text">Select a date from the list or calendar</div>
+              </div>
+            </div>
+
+          </div>
+        </div><!-- /stock-tab-history -->
+
+      </div><!-- /stock-wrapper -->
+
+      <!-- Store confirmation popup (scoped to stock section) -->
+      <div class="popup" id="confirmStorePopup" role="dialog" aria-modal="true" style="display:none;">
+        <div class="popup-content">
+          <p class="popup-title">Store Stock?</p>
+          <p class="popup-sub">Make sure all values are correct before saving.</p>
+          <button id="confirmStore" onclick="closeDialog('confirmStorePopup'); this.disabled=true; window._stock.storeStock().finally(()=>this.disabled=false)">Confirm</button>
+          <button id="cancelStore"  onclick="closeDialog('confirmStorePopup')">Cancel</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         REPORT  (owner + manager)
+         Full data table with collection selector, date filters, export.
+         Owner can query any station; manager is scoped to their station.
+    ───────────────────────────────────────────────────────────────────────── -->
+    <section id="section-report" class="section section-report" style="display:none;" data-roles="owner,manager">
+      <div class="rep-app">
+        <aside class="rep-sidebar">
+          <div class="rep-brand">
+            <div class="rep-brand-text"><h1>Reports</h1></div>
+          </div>
+          <div class="rep-reports-list" id="rep-reportsList"></div>
+        </aside>
+        <div class="rep-main">
+          <section class="rep-content">
+            <div class="rep-panel">
+              <div class="rep-table-header-row">
+                <h4 id="rep-tableTitle">Select a report</h4>
+                <span class="result-count" id="rep-resultCount"></span>
+                <button class="btn-export" id="rep-exportBtn" onclick="window._rep.exportCSV()" style="display:none;">Export CSV</button>
+              </div>
+              <div class="rep-table-wrap">
+                <div class="rep-date-filter-row" id="rep-dateFilterRow" style="display:none;">
+                  <div class="rep-control-group">
+                    <label for="rep-dateFrom">From</label>
+                    <input type="date" id="rep-dateFrom" onchange="window._rep.applyFilters()">
+                  </div>
+                  <div class="rep-control-group">
+                    <label for="rep-dateTo">To</label>
+                    <input type="date" id="rep-dateTo" onchange="window._rep.applyFilters()">
+                  </div>
+                  <button class="btn-clear-date" onclick="window._rep.clearDateFilter()">Clear</button>
+                </div>
+                <div class="rep-controls">
+                  <div class="rep-control-group">
+                    <label for="rep-searchWith">Search By</label>
+                    <select id="rep-searchWith"></select>
+                  </div>
+                  <div class="rep-control-group rep-control-search">
+                    <label for="rep-search">Search</label>
+                    <div class="rep-search-input-wrap">
+                      <input id="rep-search" class="rep-table-search" placeholder="Type to filter…" autocomplete="off" list="rep-searchSuggestions"/>
+                      <datalist id="rep-searchSuggestions"></datalist>
+                    </div>
+                  </div>
+                </div>
+                <table class="rep-indices-table">
+                  <thead><tr id="rep-headers"></tr></thead>
+                  <tbody id="rep-body"></tbody>
+                </table>
+                <div id="rep-pagination">
+                  <button id="rep-prevPage">Previous</button>
+                  <span id="rep-pageNumber">Page 1 of 1</span>
+                  <button id="rep-nextPage">Next</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         EMPLOYEE REPORT  (manager only)
+         Per-pompiste shift detail viewer — fetch by email + date.
+    ───────────────────────────────────────────────────────────────────────── -->
+    <section id="section-emp-report" class="section" style="display:none;" data-roles="manager">
+
+      <!-- ── TWO-COLUMN LAYOUT ── -->
+      <div class="pom-layout">
+
+        <!-- ── SIDEBAR ── -->
+        <aside class="pom-sidebar">
+          <div class="pom-sidebar-head">
+            <div class="pom-sidebar-title">Employee Reports</div>
+            <div class="pom-sidebar-sub">Enter details and fetch</div>
+          </div>
+          <div class="pom-inputs">
+            <div class="pom-input-group">
+              <label for="er-email">Employee Email</label>
+              <input type="email" id="er-email" placeholder="employee@email.com" autocomplete="off"/>
+            </div>
+            <div class="pom-input-group">
+              <label for="er-logDate">Date</label>
+              <input type="date" id="er-logDate"/>
+            </div>
+            <button class="pom-fetch-btn" id="er-fetchBtn"
+              onclick="this.disabled=true; window._er.displayDetails().finally(() => this.disabled=false)">
+              Fetch Report
+            </button>
+          </div>
+          <div class="pom-list-label" id="er-entryListTitle"></div>
+          <div class="pom-entry-list" id="er-entryList">
+            <div class="pom-list-empty">No report loaded yet.</div>
+          </div>
+        </aside>
+
+        <!-- ── MAIN ── -->
+        <main class="pom-main">
+          <div class="pom-main-bar">
+            <div class="loaded-date" id="er-loadedDate">No report loaded</div>
+            <div class="main-bar-actions">
+              <span class="done-pill" id="er-donePill"></span>
+              <button class="btn-download-main" onclick="this.disabled=true; window._er.download().finally(()=>this.disabled=false)">⬇ Download PDF</button>
+            </div>
+          </div>
+
+          <div class="sheet" id="er-reportSheet">
+            <section class="indices">
+              <table class="indices-table">
+                <thead>
+                  <tr>
+                    <th>P</th><th>POMPE N°</th><th>Fin journée</th><th>Début journée</th>
+                    <th>Essence (L)</th><th>Gasoil (L)</th><th>Kérosène (L)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>P1</td><td>Pump 1</td>
+                    <td><span id="er-pms2"></span></td><td><span id="er-pms1"></span></td>
+                    <td><span id="er-p1_essence"></span></td><td><span id="er-p1_gasoil">-</span></td><td><span id="er-p1_kero">-</span></td>
+                  </tr>
+                  <tr>
+                    <td>P2</td><td>Pump 2</td>
+                    <td><span id="er-pms4"></span></td><td><span id="er-pms3"></span></td>
+                    <td><span id="er-p2_essence"></span></td><td><span id="er-p2_gasoil">-</span></td><td><span id="er-p2_kero">-</span></td>
+                  </tr>
+                  <tr>
+                    <td>P3</td><td>Pump 3</td>
+                    <td><span id="er-ago2"></span></td><td><span id="er-ago1"></span></td>
+                    <td><span id="er-p3_essence">-</span></td><td><span id="er-p3_gasoil"></span></td><td><span id="er-p3_kero">-</span></td>
+                  </tr>
+                  <tr>
+                    <td>P4</td><td>Pump 4</td>
+                    <td><span id="er-ago4"></span></td><td><span id="er-ago3"></span></td>
+                    <td><span id="er-p4_essence">-</span></td><td><span id="er-p4_gasoil"></span></td><td><span id="er-p4_kero">-</span></td>
+                  </tr>
+                  <tr>
+                    <td></td><td></td><td></td><td>Total litres Sold (A)</td>
+                    <td><span id="er-venteLitresPms"></span></td><td><span id="er-venteLitresAgo"></span></td><td><span id="er-venteLitresKerosene">-</span></td>
+                  </tr>
+                  <tr>
+                    <td></td><td></td><td></td><td>Price (B)</td>
+                    <td><span id="er-pmsPrices"></span></td><td><span id="er-agoPrices"></span></td><td><span id="er-kerosenePrice">-</span></td>
+                  </tr>
+                  <tr>
+                    <td></td><td></td><td></td><td>Total Sales in Frws (AxB)</td>
+                    <td><span id="er-totalPms"></span></td><td><span id="er-totalAgo"></span></td><td><span id="er-totalKerosene">-</span></td>
+                  </tr>
+                  <tr>
+                    <td></td><td></td><td></td><td>Total Sales (FRW)</td>
+                    <td><span id="er-totalVente"></span></td><td></td><td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+
+            <section class="totals-and-payments">
+              <div class="payments">
+                <h3>Payments</h3>
+                <div class="pay-row"><label>MoMo:</label><span id="er-momo"></span></div>
+                <div class="pay-row"><label>MoMo Loss:</label><span id="er-momoLoss"></span></div>
+                <div class="pay-row"><label>SP Fuel Cards:</label><span id="er-listSFC"></span></div>
+                <div class="pay-row"><label>Bank Cards:</label><span id="er-listBC"></span></div>
+                <div class="pay-row"><label>SP Fuel Card:</label><span id="er-spFuelCard"></span></div>
+                <div class="pay-row"><label>Bank Card:</label><span id="er-bankCard"></span></div>
+                <div class="pay-row"><label>Fiche:</label><span id="er-fiche"></span></div>
+                <div class="pay-row"><label>Total Fiche:</label><span id="er-totalFiche"></span></div>
+                <div class="pay-row"><label>Bon:</label><span id="er-bon"></span></div>
+                <div class="pay-row"><label>Total Cash:</label><span id="er-totalCash"></span></div>
+                <div class="pay-row"><label>Loans:</label><span id="er-loans"></span></div>
+                <div class="pay-row"><label>Total Loans:</label><span id="er-totalLoans"></span></div>
+                <div class="pay-row"><label>Total Sales:</label><span id="er-totalPayments"></span></div>
+                <div class="pay-row"><label>Gain/Loss:</label><span id="er-gainPayments"></span></div>
+              </div>
+            </section>
+          </div><!-- /sheet -->
+        </main>
+      </div><!-- /pom-layout -->
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         SETTINGS  (owner only)
+         Company name, fuel prices per station, password change.
+    ───────────────────────────────────────────────────────────────────────── -->
+    <section id="section-settings" class="section section-settings" style="display:none;" data-roles="owner">
+      <div class="form-card" style="margin-bottom:16px;">
+        <h3 class="form-card-title">Company</h3>
+        <div class="form-row"><label>Company Name</label><input type="text" id="companyName"></div>
+        <div class="form-actions">
+          <button class="btn-primary" id="saveCompanyBtn" onclick="window._set.saveCompanyName(this)">Save</button>
+          <span id="companyStatus" class="status-msg"></span>
+        </div>
+      </div>
+      <div class="settings-wrapper">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="window._set.switchTab('fuel', this)">Fuel Prices</button>
+          <button class="tab-btn" onclick="window._set.switchTab('teams', this)">Teams</button>
+          <button class="tab-btn" onclick="window._set.switchTab('employees', this)">Employees</button>
+          <button class="tab-btn" onclick="window._set.switchTab('account', this)">Account</button>
+          <button class="tab-btn" onclick="window._set.switchTab('pumps', this)">Pumps &amp; Nozzles</button>
+        </div>
+        <!-- TAB 1: FUEL PRICES -->
+        <div id="tab-fuel" class="tab-content">
+          <div class="settings-card">
+            <div class="settings-card-title">Station Settings</div>
+            <div class="settings-field" id="stationSelectorRow">
+              <label for="settingsStationSelect">Station</label>
+              <select id="settingsStationSelect"></select>
+            </div>
+            <div class="settings-field">
+              <label for="stationName">Station Name</label>
+              <input type="text" id="stationName" placeholder="e.g. Station Total Kigali">
+            </div>
+            <div class="settings-field">
+              <label for="momoFeeInput">MoMo Fee (%)</label>
+              <input type="number" id="momoFeeInput" placeholder="e.g. 0.5" step="0.1" min="0" max="100">
+            </div>
+            <div class="settings-card-title" style="margin-top:16px;">Fuel Prices (RWF / Litre)</div>
+            <div class="settings-field">
+              <label for="pmsPriceInput">Essence (PMS)</label>
+              <input type="number" id="pmsPriceInput">
+            </div>
+            <div class="settings-field">
+              <label for="agoPriceInput">Mazout (AGO)</label>
+              <input type="number" id="agoPriceInput">
+            </div>
+            <div class="settings-actions">
+              <button class="btn-primary" onclick="openDialog('confirmSavePopup')">Save Settings</button>
+            </div>
+            <div id="fuelStatus" class="status-msg" aria-live="polite"></div>
+          </div>
+        </div>
+        <!-- TAB 2: TEAMS -->
+        <div id="tab-teams" class="tab-content" style="display:none;">
+          <div class="settings-card">
+            <div class="settings-card-title">Teams</div>
+            <p class="settings-hint">Users in any team except <strong>employees</strong> have admin access to all pages.</p>
+            <div id="teamsList"><div class="loading">Loading...</div></div>
+            <div class="add-team-row">
+              <input type="text" id="newTeamName" placeholder="New team name (e.g. Managers)">
+              <button class="btn-primary" onclick="window._set.promptCreateTeam()">Create Team</button>
+            </div>
+            <div id="teamsStatus" class="status-msg" aria-live="polite"></div>
+          </div>
+        </div>
+        <!-- TAB 3: EMPLOYEES -->
+        <div id="tab-employees" class="tab-content" style="display:none;">
+          <div class="settings-card">
+            <div class="settings-card-title">Create Employee Account</div>
+            <p class="settings-hint">Create a new pompiste account. The employee can sign in immediately using these credentials.</p>
+            <div class="settings-field">
+              <label for="empName">Full Name</label>
+              <input type="text" id="empName" placeholder="e.g. Jean Claude">
+            </div>
+            <div class="settings-field">
+              <label for="empEmail">Email</label>
+              <input type="email" id="empEmail" placeholder="employee@example.com">
+            </div>
+            <div class="settings-field">
+              <label for="empPassword">Password</label>
+              <input type="password" id="empPassword" placeholder="Min. 8 characters" minlength="8">
+            </div>
+            <div class="settings-actions">
+              <button class="btn-primary" id="createEmpBtn" onclick="window._set.promptCreateEmployee()">Create Account</button>
+            </div>
+            <div id="empStatus" class="status-msg" aria-live="polite"></div>
+          </div>
+          <div class="settings-card" style="margin-top:16px;">
+            <div class="settings-card-title">All Accounts</div>
+            <p class="settings-hint">View and manage accounts. Gain shown for <strong id="perfMonthLabel">current month</strong>.</p>
+            <div id="allEmployeesList"><div class="loading">Loading...</div></div>
+          </div>
+        </div>
+        <!-- TAB 5: PUMPS & NOZZLES -->
+        <div id="tab-pumps" class="tab-content" style="display:none;">
+          <div class="settings-card">
+            <div class="settings-card-title">Pumps &amp; Nozzles</div>
+            <p class="settings-hint">Configure the pumps and nozzles for each station. Changes take effect immediately for all pompistes.</p>
+            <div class="settings-field" id="pumpsStationRow" style="display:none;">
+              <label for="pumpsStationSelect">Station</label>
+              <select id="pumpsStationSelect" onchange="window._set.onPumpsStationChange()"></select>
+            </div>
+            <div class="pumps-split">
+              <div class="pumps-left">
+                <div class="pumps-panel-hdr">
+                  <span class="pumps-panel-label">Pumps</span>
+                  <button class="btn-primary pumps-sm-btn" onclick="window._set.promptAddPump()">+ Add Pump</button>
+                </div>
+                <div id="pumpList"><div class="loading">Loading…</div></div>
+              </div>
+              <div class="pumps-right">
+                <div class="pumps-panel-hdr">
+                  <span class="pumps-panel-label" id="nozzlePanelTitle">Select a pump</span>
+                  <button class="btn-primary pumps-sm-btn" id="addNozzleBtn" style="display:none;" onclick="window._set.promptAddNozzle()">+ Add Nozzle</button>
+                </div>
+                <div id="nozzleList"><div class="loading">Click a pump on the left.</div></div>
+              </div>
+            </div>
+            <div id="pumpsStatus" class="status-msg" aria-live="polite" style="margin-top:12px;"></div>
+          </div>
+        </div>
+
+        <!-- TAB 4: ACCOUNT -->
+        <div id="tab-account" class="tab-content" style="display:none;">
+          <div class="settings-card">
+            <div class="settings-card-title">Change My Password</div>
+            <p class="settings-hint">Update the password for your own admin account.</p>
+            <div class="settings-field">
+              <label for="ownCurrentPwd">Current Password</label>
+              <input type="password" id="ownCurrentPwd" placeholder="Enter current password">
+            </div>
+            <div class="settings-field">
+              <label for="ownNewPwd">New Password</label>
+              <input type="password" id="ownNewPwd" placeholder="Min. 8 characters" minlength="8">
+            </div>
+            <div class="settings-field">
+              <label for="ownConfirmPwd">Confirm New Password</label>
+              <input type="password" id="ownConfirmPwd" placeholder="Repeat new password">
+            </div>
+            <div class="settings-actions">
+              <button class="btn-primary" id="changeOwnPwdBtn"
+                onclick="this.disabled=true; window._set.handleChangeOwnPassword(this)">
+                Change Password
+              </button>
+            </div>
+            <div id="ownPwdStatus" class="status-msg" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         ACCOUNT  (manager only)
+    ───────────────────────────────────────────────────────────────────────── -->
+    <section id="section-account" class="section" style="display:none;" data-roles="manager">
+      <div class="section-header">
+        <h1 class="section-title">Account</h1>
+      </div>
+
+      <div class="account-grid">
+
+        <div class="form-card">
+          <h3 class="form-card-title">My Profile</h3>
+          <div class="form-row"><label>Name</label><span id="acct-name" class="form-val">—</span></div>
+          <div class="form-row"><label>Email</label><span id="acct-email" class="form-val">—</span></div>
+          <div class="form-row"><label>Role</label><span id="acct-role" class="form-val">—</span></div>
+        </div>
+
+        <div class="form-card">
+          <h3 class="form-card-title">My Station</h3>
+          <div class="form-row"><label>Station</label><span id="acct-station" class="form-val">—</span></div>
+          <div class="form-row"><label>PMS Price</label><span id="acct-pms" class="form-val">—</span></div>
+          <div class="form-row"><label>AGO Price</label><span id="acct-ago" class="form-val">—</span></div>
+          <div class="form-row"><label>MoMo Fee</label><span id="acct-momo" class="form-val">—</span></div>
+        </div>
+
+        <div class="form-card">
+          <h3 class="form-card-title">Change My Password</h3>
+        <div class="form-row"><label>Current Password</label><input type="password" id="mgrCurrentPwd" placeholder="Enter current password"></div>
+        <div class="form-row"><label>New Password</label><input type="password" id="mgrNewPwd" placeholder="Min. 8 characters"></div>
+        <div class="form-row"><label>Confirm</label><input type="password" id="mgrConfirmPwd" placeholder="Repeat new password"></div>
+          <div class="form-actions"><button class="btn-primary" id="mgrChangePwdBtn">Change Password</button></div>
+        </div>
+
+      </div><!-- /.account-grid -->
+    </section>
+
+  </main>
+
+  <!-- ── MODALS ── -->
+
+  <!-- Add Station -->
+  <div class="modal-overlay" id="addStationModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Station</h2>
+        <button class="modal-close" data-close="addStationModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row"><label>Station Name *</label><input type="text" id="addStationName" placeholder="e.g. Station Total Kigali"></div>
+        <div class="form-row"><label>Address</label><input type="text" id="addStationAddress" placeholder="e.g. KG 123 St, Kigali"></div>
+        <div class="form-row"><label>MoMo Fee (%)</label><input type="number" id="addStationMomo" placeholder="e.g. 0.5" step="0.1" min="0" max="100"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="addStationModal">Cancel</button>
+        <button class="btn-primary" id="confirmAddStationBtn">Add Station</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Station -->
+  <div class="modal-overlay" id="editStationModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Edit Station</h2>
+        <button class="modal-close" data-close="editStationModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row"><label>Station Name *</label><input type="text" id="editStationName"></div>
+        <div class="form-row"><label>Address</label><input type="text" id="editStationAddress"></div>
+        <div class="form-row"><label>MoMo Fee (%)</label><input type="number" id="editStationMomo" step="0.1" min="0" max="100"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="editStationModal">Cancel</button>
+        <button class="btn-primary" id="confirmEditStationBtn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Archive Station confirm -->
+  <div class="modal-overlay" id="archiveStationModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Archive Station</h2>
+        <button class="modal-close" data-close="archiveStationModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="archiveStationMsg">Are you sure you want to archive this station? It will no longer appear in the dashboard.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="archiveStationModal">Cancel</button>
+        <button class="btn-danger" id="confirmArchiveStationBtn">Archive</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="addUserModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="addUserModalTitle">Add User</h2>
+        <button class="modal-close" data-close="addUserModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row"><label>Full Name</label><input type="text" id="newUserName"></div>
+        <div class="form-row"><label>Email</label><input type="email" id="newUserEmail"></div>
+        <div class="form-row"><label>Temporary Password</label><input type="text" id="newUserPassword" placeholder="They will change it on first login"></div>
+        <div class="form-row" id="stationSelectRow" style="display:none;">
+          <label>Assign to Station</label>
+          <select id="newUserStation"></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="addUserModal">Cancel</button>
+        <button class="btn-primary" id="confirmAddUserBtn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editUserModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header"><h2>Edit Account</h2><button class="modal-close" data-close="editUserModal">×</button></div>
+      <div class="modal-body">
+        <div class="form-row"><label>Full Name</label><input type="text" id="editUserName"></div>
+        <div class="form-row" id="editStationRow" style="display:none;">
+          <label>Assign to Station</label>
+          <select id="editUserStation"></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="editUserModal">Cancel</button>
+        <button class="btn-primary" id="confirmEditUserBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="deleteUserModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header"><h2>Delete Account</h2><button class="modal-close" data-close="deleteUserModal">&times;</button></div>
+      <div class="modal-body">
+        <p class="modal-hint" id="deleteUserHint"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="deleteUserModal">Cancel</button>
+        <button class="btn-danger" id="confirmDeleteUserBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="resetPwdModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header"><h2>Reset Password</h2><button class="modal-close" data-close="resetPwdModal">×</button></div>
+      <div class="modal-body">
+        <p class="modal-hint" id="resetPwdHint"></p>
+        <div class="form-row"><label>New Temporary Password</label><input type="text" id="resetPwdInput" placeholder="Min. 8 characters"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="resetPwdModal">Cancel</button>
+        <button class="btn-primary" id="confirmResetPwdBtn">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="credentialModal" style="display:none;">
+    <div class="modal modal-sm">
+      <div class="modal-header"><h2>Account Created</h2></div>
+      <div class="modal-body">
+        <p class="modal-hint">Share these credentials. The user must change their password on first login.</p>
+        <div class="cred-row"><span class="cred-label">Email</span><code id="credEmail">—</code></div>
+        <div class="cred-row"><span class="cred-label">Password</span><code id="credPassword">—</code></div>
+      </div>
+      <div class="modal-footer"><button class="btn-primary" id="credDoneBtn">Done</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="confirmDeleteModal" style="display:none;">
+    <div class="modal modal-sm">
+      <div class="modal-header"><h2>Confirm Delete</h2><button class="modal-close" data-close="confirmDeleteModal">×</button></div>
+      <div class="modal-body"><p class="modal-hint" id="confirmDeleteMsg">Are you sure?</p></div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="confirmDeleteModal">Cancel</button>
+        <button class="btn-danger" id="confirmDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS POPUPS ── -->
+
+  <div class="popup" id="confirmSavePopup" role="dialog" aria-modal="true" style="display:none;">
+    <div class="popup-content">
+      <p class="popup-title">Save Settings?</p>
+      <p class="popup-sub">This will update fuel prices, station name, and MoMo fee for all users.</p>
+      <button id="confirmSave" onclick="closeDialog('confirmSavePopup'); window._set.handleSavePrices(this)">Save</button>
+      <button id="cancelSave" onclick="closeDialog('confirmSavePopup')">Cancel</button>
+    </div>
+  </div>
+
+  <div class="popup" id="confirmCreateTeamPopup" role="dialog" aria-modal="true" style="display:none;">
+    <div class="popup-content">
+      <p class="popup-title">Create Team?</p>
+      <p class="popup-sub" id="createTeamPopupSub"></p>
+      <button id="confirmCreateTeam" onclick="closeDialog('confirmCreateTeamPopup'); window._set.handleCreateTeam(this)">Create</button>
+      <button id="cancelCreateTeam" onclick="closeDialog('confirmCreateTeamPopup')">Cancel</button>
+    </div>
+  </div>
+
+  <div class="popup" id="confirmDeleteTeamPopup" role="dialog" aria-modal="true" style="display:none;">
+    <div class="popup-content">
+      <p class="popup-title">Delete Team?</p>
+      <p class="popup-sub" id="deleteTeamPopupSub"></p>
+      <button id="confirmDeleteTeam" onclick="this.disabled=true; window._set.handleDeleteTeam(this).finally(()=>this.disabled=false)">Delete</button>
+      <button id="cancelDeleteTeam" onclick="closeDialog('confirmDeleteTeamPopup')">Cancel</button>
+    </div>
+  </div>
+
+  <div class="popup" id="confirmAddMemberPopup" role="dialog" aria-modal="true" style="display:none;">
+    <div class="popup-content">
+      <p class="popup-title">Add Member?</p>
+      <p class="popup-sub" id="addMemberPopupSub"></p>
+      <button id="confirmAddMember" onclick="this.disabled=true; window._set.handleAddMember(this).finally(()=>this.disabled=false)">Add</button>
+      <button id="cancelAddMember" onclick="closeDialog('confirmAddMemberPopup')">Cancel</button>
+    </div>
+  </div>
+
+  <div class="popup" id="confirmRemoveMemberPopup" role="dialog" aria-modal="true" style="display:none;">
+    <div class="popup-content">
+      <p class="popup-title">Remove Member?</p>
+      <p class="popup-sub" id="removeMemberPopupSub"></p>
+      <button id="confirmRemoveMember" onclick="this.disabled=true; window._set.handleRemoveMember(this).finally(()=>this.disabled=false)">Remove</button>
+      <button id="cancelRemoveMember" onclick="closeDialog('confirmRemoveMemberPopup')">Cancel</button>
+    </div>
+  </div>
+
+  <div class="popup" id="editEmployeePopup" role="dialog" aria-modal="true" style="display:none;">
+    <div class="popup-content popup-wide">
+      <p class="popup-title">Edit Account</p>
+      <div class="popup-form-field">
+        <label for="editEmpName">Full Name</label>
+        <input type="text" id="editEmpName" placeholder="e.g. Jean Claude">
+      </div>
+      <div class="popup-form-field">
+        <label for="editEmpStation">Station</label>
+        <input type="text" id="editEmpStation" placeholder="e.g. Station Total Kigali">
+      </div>
+      <button id="saveEmployeeEdit" onclick="this.disabled=true; window._set.handleEditEmployee(this).finally(()=>this.disabled=false)">Save</button>
+      <button id="cancelEmployeeEdit" onclick="closeDialog('editEmployeePopup')">Cancel</button>
+    </div>
+  </div>
+
+  <div class="popup" id="resetPasswordPopup" role="dialog" aria-modal="true" style="display:none;">
+    <div class="popup-content">
+      <p class="popup-title">Reset Password</p>
+      <p class="popup-sub" id="resetPwdPopupSub"></p>
+      <div class="popup-form-field">
+        <label for="set-resetPwdInput">New Password</label>
+        <input type="password" id="set-resetPwdInput" placeholder="Min. 8 characters" minlength="8">
+      </div>
+      <button id="confirmResetPwd" onclick="this.disabled=true; window._set.handleResetPassword(this).finally(()=>this.disabled=false)">Reset</button>
+      <button id="cancelResetPwd" onclick="closeDialog('resetPasswordPopup')">Cancel</button>
+    </div>
+  </div>
+
+  <div class="popup" id="confirmCreateEmpPopup" role="dialog" aria-modal="true" style="display:none;">
+    <div class="popup-content">
+      <p class="popup-title">Create Account?</p>
+      <p class="popup-sub" id="createEmpPopupSub"></p>
+      <button id="confirmCreateEmp" onclick="closeDialog('confirmCreateEmpPopup'); window._set.handleCreateEmployee(this)">Create</button>
+      <button id="cancelCreateEmp" onclick="closeDialog('confirmCreateEmpPopup')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ── PUMPS & NOZZLES MODALS ── -->
+
+  <div class="modal-overlay" id="addPumpModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="addPumpModalTitle">Add Pump</h2>
+        <button class="modal-close" data-close="addPumpModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>Label <span style="font-weight:400;color:#94a3b8;">(optional)</span></label>
+          <input type="text" id="pumpLabelInput" placeholder="e.g. Pump A">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="addPumpModal">Cancel</button>
+        <button class="btn-primary" id="confirmAddPumpBtn"
+          onclick="this.disabled=true; window._set.handleAddPump(this).finally(()=>this.disabled=false)">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editPumpModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Edit Pump</h2>
+        <button class="modal-close" data-close="editPumpModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>Label</label>
+          <input type="text" id="editPumpLabelInput" placeholder="e.g. Pump A">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="editPumpModal">Cancel</button>
+        <button class="btn-primary" id="confirmEditPumpBtn"
+          onclick="this.disabled=true; window._set.handleEditPump(this).finally(()=>this.disabled=false)">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="addNozzleModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="addNozzleModalTitle">Add Nozzle</h2>
+        <button class="modal-close" data-close="addNozzleModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>Fuel Type</label>
+          <select id="nozzleFuelTypeInput">
+            <option value="PMS">PMS (Essence)</option>
+            <option value="AGO">AGO (Mazout)</option>
+            <option value="Kerosene">Kerosene</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Label <span style="font-weight:400;color:#94a3b8;">(optional)</span></label>
+          <input type="text" id="nozzleLabelInput" placeholder="e.g. Nozzle 1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="addNozzleModal">Cancel</button>
+        <button class="btn-primary" id="confirmAddNozzleBtn"
+          onclick="this.disabled=true; window._set.handleAddNozzle(this).finally(()=>this.disabled=false)">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editNozzleModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Edit Nozzle</h2>
+        <button class="modal-close" data-close="editNozzleModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>Fuel Type</label>
+          <select id="editNozzleFuelTypeInput">
+            <option value="PMS">PMS (Essence)</option>
+            <option value="AGO">AGO (Mazout)</option>
+            <option value="Kerosene">Kerosene</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Label</label>
+          <input type="text" id="editNozzleLabelInput" placeholder="e.g. Nozzle 1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="editNozzleModal">Cancel</button>
+        <button class="btn-primary" id="confirmEditNozzleBtn"
+          onclick="this.disabled=true; window._set.handleEditNozzle(this).finally(()=>this.disabled=false)">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup" id="togglePumpPopup" role="dialog" aria-modal="true" style="display:none;">
+    <div class="popup-content">
+      <p class="popup-title" id="togglePumpTitle">Deactivate Pump?</p>
+      <p class="popup-sub" id="togglePumpSub"></p>
+      <button id="confirmTogglePump"
+        onclick="this.disabled=true; window._set.handleTogglePump(this).finally(()=>this.disabled=false)">Confirm</button>
+      <button onclick="closeDialog('togglePumpPopup')">Cancel</button>
+    </div>
+  </div>
+
+  <div class="popup" id="toggleNozzlePopup" role="dialog" aria-modal="true" style="display:none;">
+    <div class="popup-content">
+      <p class="popup-title" id="toggleNozzleTitle">Deactivate Nozzle?</p>
+      <p class="popup-sub" id="toggleNozzleSub"></p>
+      <button id="confirmToggleNozzle"
+        onclick="this.disabled=true; window._set.handleToggleNozzle(this).finally(()=>this.disabled=false)">Confirm</button>
+      <button onclick="closeDialog('toggleNozzlePopup')">Cancel</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0/dist/iife/sdk.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="../shared/config.js"></script>
+  <script src="../shared/auth.js"></script>
+  <script src="../shared/utils.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="sections/overview.js"></script>
+  <script src="sections/stations.js"></script>
+  <script src="sections/managers.js"></script>
+  <script src="sections/pompistes.js"></script>
+  <script src="sections/situation.js"></script>
+  <script src="sections/stock.js"></script>
+  <script src="sections/report.js"></script>
+  <script src="sections/settings.js"></script>
+  <script src="sections/account.js"></script>
+  <script src="sections/emp-report.js"></script>
+</body>
+</html>

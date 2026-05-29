@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231b263b'/><text x='16' y='23' text-anchor='middle' font-family='Arial' font-weight='900' font-size='16' fill='white'>RP</text></svg>">
+    <title>Rapport Pompiste</title>
+</head>
+<body>
+<a href="#main-content" class="skip-nav">Skip to main content</a>
+
+    <!-- ── HEADER ── -->
+    <header class="site-header">
+        <div class="header-brand">
+            <div class="brand-icon">RP</div>
+            <div>
+                <div class="brand-title">Rapport Pompiste</div>
+                <div class="brand-sub" id="welcomeMessage"></div>
+            </div>
+        </div>
+        <div class="fuel-prices">
+            <p>ESSENCE: <span id="pmsPrice">—</span></p>
+            <p>MAZOUT: <span id="agoPrice">—</span></p>
+            <p id="headerStationName" style="display:none;"></p>
+        </div>
+    </header>
+
+    <!-- ── SHIFT BAR ── -->
+    <div class="shift-bar">
+        <div class="shift-field">
+            <label for="logDate">Date</label>
+            <input type="date" name="logDate" id="logDate">
+        </div>
+        <div class="shift-field">
+            <label for="shift">Shift</label>
+            <select id="shift">
+                <option value=""></option>
+                <option value="Morning">Morning</option>
+                <option value="Afternoon">Afternoon</option>
+                <option value="Evening">Evening</option>
+                <option value="Night">Night</option>
+            </select>
+        </div>
+        <p><span id="status"></span></p>
+    </div>
+
+    <!-- ── MAIN FORMS ── -->
+    <div class="forms-container" id="main-content">
+
+        <!-- LEFT: PUMP INDEX -->
+        <div class="form-side">
+            <div class="section-title">Pump Index</div>
+            <form action="" id="rapportForm">
+
+                <!-- PMS / Essence -->
+                <div class="fuel-group pms-group">
+                    <div class="fuel-group-label">Essence (PMS) — Pumps P1 &amp; P2</div>
+                    <div class="pump-row">
+                        <span class="pump-id">P1</span>
+                        <label>Start</label>
+                        <input type="number" name="pms" id="pms1">
+                        <label>End</label>
+                        <input type="number" name="pms" id="pms2">
+                    </div>
+                    <div class="pump-row">
+                        <span class="pump-id">P2</span>
+                        <label>Start</label>
+                        <input type="number" name="pms" id="pms3">
+                        <label>End</label>
+                        <input type="number" name="pms" id="pms4">
+                    </div>
+                </div>
+
+                <!-- AGO / Mazout -->
+                <div class="fuel-group ago-group">
+                    <div class="fuel-group-label">Mazout (AGO) — Pumps P3 &amp; P4</div>
+                    <div class="pump-row">
+                        <span class="pump-id">P3</span>
+                        <label>Start</label>
+                        <input type="number" name="ago" id="ago1">
+                        <label>End</label>
+                        <input type="number" name="ago" id="ago2">
+                    </div>
+                    <div class="pump-row">
+                        <span class="pump-id">P4</span>
+                        <label>Start</label>
+                        <input type="number" name="ago" id="ago3">
+                        <label>End</label>
+                        <input type="number" name="ago" id="ago4">
+                    </div>
+                </div>
+
+            </form>
+
+            <div style="padding: 0 16px 12px;">
+                <button class="action-btn" onclick="this.disabled=true; calculateIndex().finally(() => this.disabled=false)">Calculate Index</button>
+            </div>
+
+            <div class="result-cards">
+                <div class="result-card pms-card">
+                    <div class="result-label">PMS Sales</div>
+                    <div class="result-value output" id="resultpms">—</div>
+                </div>
+                <div class="result-card ago-card">
+                    <div class="result-label">AGO Sales</div>
+                    <div class="result-value output" id="resultago">—</div>
+                </div>
+                <div class="result-card total-card">
+                    <div class="result-label">Total Vente</div>
+                    <div class="result-value output" id="result">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: PAYMENTS -->
+        <div class="form-side">
+            <div class="section-title">Payments</div>
+            <form action="" id="paymentsForm">
+
+                <div class="payment-rows">
+                    <div class="pay-input-row">
+                        <label for="momo">MoMo</label>
+                        <input type="number" name="momo" id="momo" min="0" oninput="MomoLoss()">
+                        <span class="momo-loss-inline">
+                            <span class="momo-loss-label">Loss</span>
+                            <input type="number" name="momoLoss" id="momoLoss" readonly tabindex="-1">
+                        </span>
+                    </div>
+                    <div class="pay-input-row chip-row">
+                        <label>SP Fuel Card</label>
+                        <div class="chip-input-group">
+                            <input type="number" id="spFuelCardInput" placeholder="Amount" min="1" onkeydown="if(event.key==='Enter'){event.preventDefault();addSpCard();}">
+                            <button type="button" class="btn-secondary" onclick="addSpCard()">Add</button>
+                        </div>
+                        <div id="spFuelCardChips" class="chips-row"></div>
+                    </div>
+                    <div class="pay-input-row">
+                        <label for="bon">Bon</label>
+                        <input type="number" name="bon" id="bon" min="0">
+                    </div>
+                    <div class="pay-input-row chip-row">
+                        <label>Bank Card</label>
+                        <div class="chip-input-group">
+                            <input type="number" id="bankCardInput" placeholder="Amount" min="1" onkeydown="if(event.key==='Enter'){event.preventDefault();addBankCard();}">
+                            <button type="button" class="btn-secondary" onclick="addBankCard()">Add</button>
+                        </div>
+                        <div id="bankCardChips" class="chips-row"></div>
+                    </div>
+                </div>
+
+                <!-- Bulletage / Cash -->
+                <div class="cash-section">
+                    <div class="cash-section-title">Cash (Bulletage)</div>
+                    <div class="cash-grid">
+                        <div class="cash-denom">
+                            <label>5,000 &times;</label>
+                            <input type="number" name="cash5000" id="5000" min="0">
+                        </div>
+                        <div class="cash-denom">
+                            <label>2,000 &times;</label>
+                            <input type="number" name="cash2000" id="2000" min="0">
+                        </div>
+                        <div class="cash-denom">
+                            <label>1,000 &times;</label>
+                            <input type="number" name="cash1000" id="1000" min="0">
+                        </div>
+                        <div class="cash-denom">
+                            <label>500 &times;</label>
+                            <input type="number" name="cash500" id="500" min="0">
+                        </div>
+                    </div>
+                    <div class="cash-total">
+                        <span>Total Cash</span>
+                        <span class="output" id="totalCash">—</span>
+                    </div>
+                </div>
+
+                <!-- Fiche & Loans -->
+                <div class="fiche-loan-section">
+                    <div class="fiche-loan-panels">
+
+                        <!-- FICHE CARD -->
+                        <div class="entry-panel">
+                            <div class="entry-card">
+                                <div class="entry-card-title">Fiche</div>
+                                <div class="entry-field">
+                                    <label for="fiche-plate">Plate</label>
+                                    <input class="loan" type="text" id="fiche-plate" placeholder="e.g. RAB 123A" pattern="R[A-Z]{2}\s?\d{3}\s?[A-Z]" title="Format: RAB 123 A (R + 2 letters + 3 digits + 1 letter)" oninput="this.value=this.value.toUpperCase()">
+                                </div>
+                                <div class="entry-field">
+                                    <label for="fiche-company">Company</label>
+                                    <input class="loan" type="text" id="fiche-company" placeholder="e.g. Total, Shell">
+                                </div>
+                                <div class="entry-field">
+                                    <label for="fiche-amount">Amount</label>
+                                    <input class="loan" type="number" id="fiche-amount" placeholder="e.g. 50000" min="1" onkeydown="if(event.key==='Enter'){event.preventDefault();addFiche();}">
+                                </div>
+                                <div class="entry-actions">
+                                    <button type="button" class="action-btn" onclick="addFiche()">Add Fiche</button>
+                                </div>
+                            </div>
+                            <div id="ficheChips" class="chips-row"></div>
+                            <div class="entry-total">
+                                <span class="entry-total-label">Total Fiche</span>
+                                <span class="entry-total-value output" id="totalFiche">—</span>
+                            </div>
+                        </div>
+
+                        <!-- LOAN CARD -->
+                        <div class="entry-panel">
+                            <div class="entry-card">
+                                <div class="entry-card-title">Loan</div>
+                                <div class="entry-field">
+                                    <label for="loan-plate">Plate</label>
+                                    <input class="loan" type="text" id="loan-plate" placeholder="e.g. RAB 123A" pattern="R[A-Z]{2}\s?\d{3}\s?[A-Z]" title="Format: RAB 123 A (R + 2 letters + 3 digits + 1 letter)" oninput="this.value=this.value.toUpperCase()">
+                                </div>
+                                <div class="entry-field">
+                                    <label for="loan-company">Company</label>
+                                    <input class="loan" type="text" id="loan-company" placeholder="e.g. Total, Shell">
+                                </div>
+                                <div class="entry-field">
+                                    <label for="loan-amount">Amount</label>
+                                    <input class="loan" type="number" id="loan-amount" placeholder="e.g. 50000" min="1" onkeydown="if(event.key==='Enter'){event.preventDefault();addLoan();}">
+                                </div>
+                                <div class="entry-actions">
+                                    <button type="button" class="action-btn" onclick="addLoan()">Add Loan</button>
+                                </div>
+                            </div>
+                            <div id="loanChips" class="chips-row"></div>
+                            <div class="entry-total">
+                                <span class="entry-total-label">Total Loans</span>
+                                <span class="entry-total-value output" id="totalLoans">—</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </form>
+
+            <div style="padding: 0 16px 12px;">
+                <button class="action-btn" onclick="this.disabled=true; payments().finally(() => this.disabled=false)">Calculate Payments</button>
+            </div>
+
+            <div class="result-cards">
+                <div class="result-card total-card">
+                    <div class="result-label">Total Payments</div>
+                    <div class="result-value output" id="totalPayments">—</div>
+                </div>
+                <div class="result-card gain-card">
+                    <div class="result-label">Gain / Loss</div>
+                    <div class="result-value output" id="gainPayments">—</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── STORE REPORT ── -->
+    <div class="store-bar">
+        <button class="action-btn btn-store" onclick="openDialog('confirmStorePopup')">Store Report</button>
+    </div>
+
+    <footer>
+        <a href="/testing_projects/pages/history/history" class="btn-history">My History</a>
+        <button class="action-btn btn-print" onclick="window.print()">Print Report</button>
+        <button class="action-btn btn-logout" onclick="openDialog('confirmLogoutPopup')">Log Out</button>
+    </footer>
+
+    <!-- ── LOGOUT CONFIRMATION POPUP ── -->
+    <div class="popup" id="confirmLogoutPopup" role="dialog" aria-modal="true" aria-labelledby="dlg-logout-title" aria-hidden="true" style="display:none;">
+        <div class="popup-content">
+            <p id="dlg-logout-title" style="font-size:14px; font-weight:700; margin-bottom:4px;">Log Out?</p>
+            <p style="color:var(--muted); font-size:11px; margin-bottom:12px;">Any unsaved data will be lost.</p>
+            <button id="confirmLogout" onclick="closeDialog('confirmLogoutPopup'); this.disabled=true; logout().finally(()=>this.disabled=false)">Log Out</button>
+            <button id="cancelLogout" onclick="closeDialog('confirmLogoutPopup')">Cancel</button>
+        </div>
+    </div>
+
+    <!-- ── STORE REPORT CONFIRMATION POPUP ── -->
+    <div class="popup" id="confirmStorePopup" role="dialog" aria-modal="true" aria-labelledby="dlg-store-title" aria-hidden="true" style="display:none;">
+        <div class="popup-content">
+            <p id="dlg-store-title" style="font-size:14px; font-weight:700; margin-bottom:4px;">Store Report?</p>
+            <p style="color:var(--muted); font-size:11px; margin-bottom:12px;">Make sure all data is correct before saving.</p>
+            <button id="confirmStore" onclick="closeDialog('confirmStorePopup'); this.disabled=true; situation().finally(()=>this.disabled=false)">Confirm</button>
+            <button id="cancelStore" onclick="closeDialog('confirmStorePopup')">Cancel</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0/dist/iife/sdk.js"></script>
+    <script src="../shared/config.js"></script>
+    <script src="../shared/auth.js"></script>
+    <script src="index.js"></script>
+    <script src="../shared/utils.js"></script>
+</body>
+</html>

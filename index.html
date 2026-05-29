@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport Pompiste</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231b263b'/><text x='16' y='23' text-anchor='middle' font-family='Arial' font-weight='900' font-size='16' fill='white'>RP</text></svg>">
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0/dist/iife/sdk.js"></script>
+  <script src="shared/config.js"></script>
+  <script>
+    (async () => {
+      try {
+        const jwt = (await _AW.account.createJWT()).jwt;
+        const res = await fetch(`${_AW.SERVER_URL}/users/me`);
+        if (!res.ok) throw new Error();
+        const { user } = await res.json();
+        const doc = user.documents?.[0];
+        if (!doc) throw new Error();
+        if (doc.mustChangePassword)  return location.replace(_AW.FIRST_LOGIN_URL);
+        if (doc.role === "owner")    return location.replace(_AW.OWNER_DASHBOARD_URL);
+        if (doc.role === "manager")  return location.replace(_AW.MANAGER_DASHBOARD_URL);
+        location.replace(_AW.POMPISTE_URL);
+
+      } catch {
+        location.replace(_AW.SIGNIN_URL);
+      }
+    })();
+  </script>
+</body>
+</html>

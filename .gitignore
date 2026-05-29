@@ -1,0 +1,20 @@
+# Ignore environment variables and sensitive files
+.env
+.venv
+.vscode/
+node_modules/
+pages/customers
+.claude
+test
+CLAUDE.md
+database_setup.js
+test
+.agents
+AUDIT.md
+setup_db_v3.py
+seed_db_v3.py
+repair_db_v3.py
+HANDOFF.md
+check_db_v3.py
+database_export.json
+memory

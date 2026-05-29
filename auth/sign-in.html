@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — Rapport Pompiste</title>
+  <link rel="stylesheet" href="auth.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231b263b'/><text x='16' y='23' text-anchor='middle' font-family='Arial' font-weight='900' font-size='16' fill='white'>RP</text></svg>">
+</head>
+<body>
+  <div class="split-page">
+    <div class="form-half">
+      <div class="auth-brand">
+        <div class="auth-brand-icon">RP</div>
+        <span class="auth-brand-name">Rapport Pompiste</span>
+        <span class="auth-brand-sub">Gas Station Management System</span>
+      </div>
+      <div class="login-container">
+
+        <!-- ── SIGN IN FORM ── -->
+        <div id="view-signin">
+          <h1>Welcome Back</h1>
+          <form id="loginForm">
+            <div class="input-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" autocomplete="email" required>
+            </div>
+            <div class="input-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" autocomplete="current-password" required>
+            </div>
+            <div id="loginError" style="color:#dc2626;font-size:12px;margin-bottom:8px;display:none;"></div>
+            <button type="submit" class="login-button">Sign In</button>
+          </form>
+          <p class="signup-link" style="margin-top:12px;">
+            <a href="#" id="forgotLink">Forgot your password?</a>
+          </p>
+        </div>
+
+        <!-- ── FORGOT PASSWORD FORM ── -->
+        <div id="view-forgot" style="display:none;">
+          <h1>Reset Password</h1>
+          <p>Enter your email address and we'll send you a reset link.</p>
+          <form id="forgotForm">
+            <div class="input-group">
+              <label for="resetEmail">Email</label>
+              <input type="email" id="resetEmail" name="resetEmail" required>
+            </div>
+            <button type="submit" class="login-button">Send Reset Link</button>
+          </form>
+          <p class="signup-link" style="margin-top:12px;">
+            <a href="#" id="backToSignin">← Back to Sign In</a>
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0/dist/iife/sdk.js"></script>
+  <script src="../shared/config.js"></script>
+  <script src="../shared/auth.js"></script>
+  <script>
+    function showError(msg) {
+      const el = document.getElementById("loginError");
+      el.textContent = msg;
+      el.style.display = msg ? "block" : "none";
+    }
+
+    async function redirectByRole(role, mustChangePassword) {
+      if (mustChangePassword) return location.replace(_AW.FIRST_LOGIN_URL);
+      if (role === "owner" || role === "manager") return location.replace(_AW.OWNER_DASHBOARD_URL);
+      return location.replace(_AW.POMPISTE_URL);
+    }
+
+    // ── ALREADY SIGNED IN CHECK ──────────────────────────────────
+    (async function () {
+      try {
+        await _AW.account.get();
+        const res = await apiFetch("/users/me");
+        if (!res.ok) return;
+        const { user } = await res.json();
+        const doc = user?.documents?.[0];
+        if (!doc) return;
+        redirectByRole(doc.role, doc.mustChangePassword);
+      } catch {
+        // Not signed in — stay on page
+      }
+    })();
+
+    // ── SIGN IN ──────────────────────────────────────────────────
+    document.getElementById("loginForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      showError("");
+      const btn      = this.querySelector('button[type="submit"]');
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      btn.disabled   = true;
+
+      try { await _AW.account.deleteSession("current"); } catch {}
+
+      try {
+        await _AW.account.createEmailPasswordSession(email, password);
+      } catch(err){
+        console.log("err",err);
+        showError("Invalid email or password. Please try again.");
+        btn.disabled = false;
+        return;
+      }
+
+      try {
+        const res = await apiFetch("/users/me");
+        if (!res.ok) throw new Error("Could not load profile.");
+        const { user } = await res.json();
+        const doc = user?.documents?.[0];
+        if (!doc) throw new Error("Account not set up yet. Contact your administrator.");
+        redirectByRole(doc.role, doc.mustChangePassword);
+      } catch (err) {
+        showError(err.message || "Signed in but could not load your profile. Try refreshing.");
+        btn.disabled = false;
+      }
+    });
+
+    // ── FORGOT PASSWORD ──────────────────────────────────────────
+    document.getElementById("forgotLink").addEventListener("click", (e) => {
+      e.preventDefault();
+      showError("");
+      document.getElementById("view-signin").style.display = "none";
+      document.getElementById("view-forgot").style.display = "block";
+    });
+
+    document.getElementById("backToSignin").addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById("view-forgot").style.display = "none";
+      document.getElementById("view-signin").style.display = "block";
+    });
+
+    document.getElementById("forgotForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const btn      = this.querySelector('button[type="submit"]');
+      btn.disabled   = true;
+      const email    = document.getElementById("resetEmail").value.trim();
+      const resetUrl = `${window.location.origin}/testing_projects/auth/reset-password.html`;
+      try {
+        await _AW.account.createRecovery(email, resetUrl);
+        alert("Reset link sent — check your email.");
+        document.getElementById("view-forgot").style.display = "none";
+        document.getElementById("view-signin").style.display = "block";
+      } catch {
+        alert("Could not send reset link. Check the email address and try again.");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

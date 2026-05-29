@@ -1,0 +1,213 @@
+/* =============================================
+   RAPPORT POMPISTE — Auth Pages (Shared)
+   ============================================= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f1f5f9;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #0f172a;
+}
+
+/* ── LAYOUT ───────────────────────────────────── */
+.split-page { width: 100%; display: flex; justify-content: center; }
+.form-half  { width: 100%; max-width: 420px; }
+
+/* .card is used by reset-password and first-login (simpler single-card layout) */
+.card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.07);
+}
+
+/* ── BRAND HEADER ─────────────────────────────── */
+.auth-brand {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 22px;
+}
+
+.auth-brand-icon {
+  width: 54px; height: 54px;
+  background: #1b263b;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  font-size: 18px;
+  font-weight: 900;
+  color: white;
+  letter-spacing: -1px;
+  box-shadow: 0 4px 14px rgba(27,38,59,0.3);
+}
+
+.auth-brand-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0d1b2a;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  display: block;
+}
+
+.auth-brand-sub {
+  font-size: 12px;
+  color: #475569;
+  margin-top: 3px;
+  display: block;
+  font-weight: 400;
+}
+
+/* ── CARD (login-container is used by sign-in / sign-up) ── */
+.login-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
+  padding: 30px 32px 28px;
+  border: 1px solid #e2e8f0;
+}
+
+.login-container h1, .card h1 {
+  font-size: 21px;
+  font-weight: 700;
+  color: #0d1b2a;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.login-container > p, .card p, .card .sub {
+  color: #475569;
+  font-size: 13px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* ── INPUTS ───────────────────────────────────── */
+.input-group { margin-bottom: 16px; text-align: left; }
+
+.input-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #0d1b2a;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 7px;
+  font-size: 14px;
+  background: #fdfdfd;
+  color: #0f172a;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group input:focus {
+  border-color: #1b263b;
+  box-shadow: 0 0 0 3px rgba(27,38,59,0.1);
+  outline: none;
+  background: white;
+}
+
+/* ── BUTTONS ──────────────────────────────────── */
+.login-button, .btn {
+  width: 100%;
+  padding: 11px;
+  border: none;
+  border-radius: 7px;
+  background: #1b263b;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+  margin-top: 8px;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+.login-button:hover:not(:disabled), .btn:hover:not(:disabled) {
+  background: #415a77;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(27,38,59,0.3);
+}
+
+.login-button:disabled, .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* ── ERROR / LINKS ────────────────────────────── */
+.error-msg, #errorMsg {
+  font-size: 12px;
+  color: #dc2626;
+  margin-bottom: 10px;
+  display: none;
+}
+
+.signup-link, .back-link {
+  display: block;
+  margin-top: 18px;
+  text-align: center;
+  font-size: 13px;
+  color: #475569;
+  text-decoration: none;
+}
+
+.signup-link a, .back-link {
+  color: #1b263b;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.signup-link a:hover, .back-link:hover { text-decoration: underline; }
+
+/* ── SELECT ───────────────────────────────────── */
+.input-group select {
+  width: 100%;
+  padding: 10px 38px 10px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 7px;
+  background: #fdfdfd;
+  color: #0f172a;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path fill='%23666' d='M0 0l5 6 5-6z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 12px) center;
+  background-size: 10px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group select:focus {
+  border-color: #1b263b;
+  box-shadow: 0 0 0 3px rgba(27,38,59,0.1);
+  outline: none;
+}
+
+@media (max-width: 480px) {
+  .login-container, .card { padding: 24px 20px; }
+}
