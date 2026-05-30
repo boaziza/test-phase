@@ -13,9 +13,27 @@ const DATABASE_ID = process.env.APPWRITE_DATABASE_ID;
 router.post('/', verifyJWT, requireRole(['owner','manager','pompiste']), async (req, res) => {
   try {
     const body = req.body;
+    if (!body) return res.status(400).json({ error: "Gain body is required." });
 
-    if (!body){
-     return res.status(400).json({ error: "Gain body is required." });
+    const { gainKey, gainPayments = 0 } = body;
+
+    // Upsert by gainKey (one record per pompiste per month)
+    if (gainKey) {
+      const existing = await db.listDocuments(DATABASE_ID, COLLECTION_GAIN_ID, [
+        Query.equal('gainKey', gainKey),
+        Query.limit(1),
+      ]);
+
+      if (existing.documents.length > 0) {
+        const doc = existing.documents[0];
+        const updated = await db.updateDocument(
+          DATABASE_ID,
+          COLLECTION_GAIN_ID,
+          doc.$id,
+          { gainPayments: (doc.gainPayments || 0) + gainPayments }
+        );
+        return res.json({ message: "Gain updated successfully", gain: updated });
+      }
     }
 
     const newGain = await db.createDocument(
@@ -24,7 +42,6 @@ router.post('/', verifyJWT, requireRole(['owner','manager','pompiste']), async (
       ID.unique(),
       body
     );
-
     res.json({ message: "Gain created successfully", gain: newGain });
   } catch (error) {
     res.status(500).json({ error: error.message });
