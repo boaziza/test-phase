@@ -733,10 +733,20 @@
     const label = document.getElementById("pumpLabelInput").value.trim();
     const statusEl = document.getElementById("pumpsStatus");
     try {
+      const existing = await apiFetch(`/pumps?station=${_pumps.stationId}`).then(r => r.json());
+      const pumps = existing.pumps ?? existing.documents ?? [];
+      const pumpNumber = pumps.length > 0 ? Math.max(...pumps.map(p => p.pumpNumber || 0)) + 1 : 1;
+
       await apiFetch("/pumps", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stationId: _pumps.stationId, companyId: state.company?.$id, label }),
+        body: JSON.stringify({
+          stationId:  _pumps.stationId,
+          companyId:  state.company?.$id,
+          pumpNumber,
+          order:      pumpNumber,
+          label:      label || `Pump ${pumpNumber}`,
+        }),
       });
       closeModal("addPumpModal");
       showStatus(statusEl, "✓ Pump added.", "success");
@@ -818,10 +828,21 @@
     const statusEl = document.getElementById("pumpsStatus");
     if (!pump) { showStatus(statusEl, "Select a pump first.", "error"); btn.disabled = false; return; }
     try {
+      const existing = await apiFetch(`/nozzles?pump=${pump.$id}`).then(r => r.json());
+      const nozzles = existing.nozzles ?? existing.documents ?? [];
+      const nozzleNumber = nozzles.length > 0 ? Math.max(...nozzles.map(n => n.nozzleNumber || 0)) + 1 : 1;
+
       await apiFetch("/nozzles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pumpId: pump.$id, stationId: _pumps.stationId, companyId: state.company?.$id, fuelType, label }),
+        body: JSON.stringify({
+          pumpId:       pump.$id,
+          stationId:    _pumps.stationId,
+          companyId:    state.company?.$id,
+          nozzleNumber,
+          fuelType,
+          label:        label || `Nozzle ${nozzleNumber}`,
+        }),
       });
       closeModal("addNozzleModal");
       showStatus(statusEl, "✓ Nozzle added.", "success");
