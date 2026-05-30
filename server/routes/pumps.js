@@ -7,11 +7,11 @@ const DB      = process.env.APPWRITE_DATABASE_ID;
 const COL     = process.env.APPWRITE_PUMPS_ID;
 
 // GET /api/pumps?station=<id>
-// Owner: any station in their company. Manager: own station only.
-router.get('/', verifyJWT, requireRole(['owner', 'manager']), async (req, res) => {
+// Owner: any station in their company. Manager/Pompiste: own station only.
+router.get('/', verifyJWT, requireRole(['owner', 'manager', 'pompiste']), async (req, res) => {
   try {
     const { role, stationId: myStation, companyId } = req.user;
-    const station = req.query.station || (role === 'manager' ? myStation : null);
+    const station = req.query.station || (role !== 'owner' ? myStation : null);
 
     if (!station) return res.status(400).json({ error: 'station query param required' });
 
@@ -21,7 +21,7 @@ router.get('/', verifyJWT, requireRole(['owner', 'manager']), async (req, res) =
       Query.limit(200),
     ];
 
-    if (role === 'manager' && station !== myStation) {
+    if (role !== 'owner' && station !== myStation) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
