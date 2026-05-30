@@ -57,7 +57,7 @@ async function initSettings() {
 
     const raw = nozzlesRes.nozzles ?? nozzlesRes.documents ?? [];
     _nozzles = raw
-      .filter(n => n.active !== false)
+      .filter(n => n.active !== false && pumpMap[n.pumpId]?.active !== false)
       .map(n => ({
         ...n,
         pumpNumber: pumpMap[n.pumpId]?.pumpNumber ?? 0,

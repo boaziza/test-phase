@@ -31,7 +31,7 @@
 
     const raw = nozzlesRes.nozzles ?? nozzlesRes.documents ?? [];
     _nozzleCache = raw
-      .filter(n => n.active !== false)
+      .filter(n => n.active !== false && pumpMap[n.pumpId]?.active !== false)
       .map(n => ({
         ...n,
         pumpNumber: pumpMap[n.pumpId]?.pumpNumber ?? 0,
@@ -242,22 +242,21 @@
     const tbody = document.getElementById("nozzleReadingsBody");
     if (!tbody) return;
 
-    if (!nozzles.length) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:1rem;color:var(--text-muted,#888);">No nozzles configured. Add pumps and nozzles in Settings → Pumps &amp; Nozzles.</td></tr>`;
-      return;
-    }
+    if (editing) {
+      // Edit mode: driven by active nozzles — deactivated pumps excluded
+      if (!nozzles.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:1rem;color:var(--text-muted,#888);">No active nozzles configured. Add pumps and nozzles in Settings → Pumps &amp; Nozzles.</td></tr>`;
+        return;
+      }
+      const readingMap = {};
+      readings.forEach(r => { readingMap[r.nozzleId] = r; });
 
-    const readingMap = {};
-    readings.forEach(r => { readingMap[r.nozzleId] = r; });
-
-    tbody.innerHTML = nozzles.map(n => {
-      const r       = readingMap[n.$id] || {};
-      const nLabel  = n.label || `Nozzle ${n.nozzleNumber}`;
-      const fuelCls = n.fuelType === "PMS" ? "pms" : n.fuelType === "AGO" ? "ago" : "kero";
-      const start   = r.startReading != null ? r.startReading : "";
-      const end     = r.endReading   != null ? r.endReading   : "";
-
-      if (editing) {
+      tbody.innerHTML = nozzles.map(n => {
+        const r       = readingMap[n.$id] || {};
+        const nLabel  = n.label || `Nozzle ${n.nozzleNumber}`;
+        const fuelCls = n.fuelType === "PMS" ? "pms" : n.fuelType === "AGO" ? "ago" : "kero";
+        const start   = r.startReading != null ? r.startReading : "";
+        const end     = r.endReading   != null ? r.endReading   : "";
         return `<tr data-nozzle-id="${n.$id}" data-fuel-type="${n.fuelType}" data-pump-id="${n.pumpId}" data-pump-number="${n.pumpNumber}" data-nozzle-number="${n.nozzleNumber}">
           <td>${n.pumpNumber}</td>
           <td>${n.pumpLabel}</td>
@@ -267,21 +266,32 @@
           <td><input type="number" class="sit-edit-input nozzle-start" data-nozzle="${n.$id}" value="${Number(start) || 0}" oninput="window._sit.recalcNozzles()"></td>
           <td class="nozzle-sold" data-nozzle="${n.$id}">—</td>
         </tr>`;
-      }
+      }).join("");
+      recalcNozzles();
+      return;
+    }
 
-      const sold = (end !== "" && start !== "") ? Number(end) - Number(start) : null;
-      return `<tr data-nozzle-id="${n.$id}" data-fuel-type="${n.fuelType}">
-        <td>${n.pumpNumber}</td>
-        <td>${n.pumpLabel}</td>
-        <td>${nLabel}</td>
-        <td><span class="fuel-pill ${fuelCls}">${n.fuelType}</span></td>
-        <td>${end   !== "" ? fmt(Number(end))   : "—"}</td>
-        <td>${start !== "" ? fmt(Number(start)) : "—"}</td>
-        <td>${sold !== null ? fmt(sold) : "—"}</td>
-      </tr>`;
-    }).join("");
+    // View mode: driven by saved readings — shows all recorded data including
+    // readings for pumps that have since been deactivated
+    if (!readings.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:1rem;color:var(--text-muted,#888);">No nozzle readings recorded for this date.</td></tr>`;
+      return;
+    }
 
-    if (editing) recalcNozzles();
+    tbody.innerHTML = [...readings]
+      .sort((a, b) => (a.pumpNumber - b.pumpNumber) || (a.nozzleNumber - b.nozzleNumber))
+      .map(r => {
+        const fuelCls = r.fuelType === "PMS" ? "pms" : r.fuelType === "AGO" ? "ago" : "kero";
+        return `<tr data-nozzle-id="${r.nozzleId}" data-fuel-type="${r.fuelType}">
+          <td>${r.pumpNumber  || "—"}</td>
+          <td>Pump ${r.pumpNumber  || "?"}</td>
+          <td>Nozzle ${r.nozzleNumber || "?"}</td>
+          <td><span class="fuel-pill ${fuelCls}">${r.fuelType}</span></td>
+          <td>${r.endReading   != null ? fmt(r.endReading)   : "—"}</td>
+          <td>${r.startReading != null ? fmt(r.startReading) : "—"}</td>
+          <td>${r.venteLitres  != null ? fmt(r.venteLitres)  : "—"}</td>
+        </tr>`;
+      }).join("");
   }
 
   function recalcNozzles() {
