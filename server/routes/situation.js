@@ -37,7 +37,7 @@ router.post('/', verifyJWT, requireRole(['owner','manager','pompiste']), async (
  * GET /situation
  * Returns the situation details for the logged-in user.
  */
-router.get('/me', verifyJWT, requireRole(['owner','manager']), async (req, res) => {
+router.get('/me', verifyJWT, requireRole(['owner','manager','pompiste']), async (req, res) => {
   try {
     const logDate = req.query.logDate;
     if (!logDate) {
