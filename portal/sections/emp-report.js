@@ -184,15 +184,16 @@
         return;
       }
 
-      // For each shift entry, fetch its nozzle readings
-      const stationId = state.profile?.stationId;
+      // For each shift entry, fetch its nozzle readings.
+      // Use the stationId from the daily-report doc itself so this works
+      // for owners (who have no stationId on their own profile).
       const docsWithReadings = await Promise.all(idxDocs.map(async doc => {
+        const stationId = doc.stationId || state.profile?.stationId;
         if (!stationId || !doc.shift) return { ...doc, nozzleReadings: [] };
         try {
           const res = await apiFetch(
             `/nozzle-readings?station=${stationId}&date=${_logDate}&shift=${encodeURIComponent(doc.shift)}`
           ).then(r => r.json());
-          // Filter to only this employee's readings
           const readings = (res.readings ?? []).filter(r => r.email === _email);
           return { ...doc, nozzleReadings: readings };
         } catch {
