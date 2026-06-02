@@ -652,27 +652,87 @@
       <div class="section-header">
         <div>
           <h1 class="section-title">Bonus Filter</h1>
-          <p class="section-sub">Upload a station sales Excel file to generate the bonus summary.</p>
+          <p class="section-sub">Upload a station sales Excel file to calculate qualifying customer bonuses.</p>
         </div>
       </div>
-      <div class="settings-card" style="max-width:480px;">
-        <div class="settings-card-title">Upload Sales File</div>
-        <p class="settings-hint">Filters CASH, MTN MOMO and BANK CARD payments for customers starting with 1 or 7, keeps only those with total ≥ 400,000 RWF.</p>
-        <div class="settings-field" style="margin-top:16px;">
-          <label class="btn-primary" style="cursor:pointer;display:inline-block;">
-            Choose File
+
+      <div style="max-width:700px;">
+
+        <!-- ── Upload card ── -->
+        <div class="settings-card">
+          <div class="settings-card-title">Upload Sales File</div>
+          <p class="settings-hint" style="margin-bottom:0;">
+            Filters <strong>CASH</strong>, <strong>MTN MOMO</strong> &amp; <strong>BANK CARD</strong> &nbsp;·&nbsp;
+            Customers starting with <strong>1</strong> or <strong>7</strong> &nbsp;·&nbsp;
+            Total &nbsp;≥&nbsp; <strong>400,000 RWF</strong>
+          </p>
+
+          <!-- Drag & drop zone -->
+          <div id="bonusDropZone"
+            ondragover="window._bon.onDragOver(event)"
+            ondragleave="window._bon.onDragLeave()"
+            ondrop="window._bon.onDrop(event)"
+            onclick="document.getElementById('bonusFileInput').click()"
+            style="margin-top:18px;border:2px dashed #c8d3e6;border-radius:10px;padding:36px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#f8fafc;">
+            <div style="font-size:36px;margin-bottom:10px;line-height:1;">📁</div>
+            <div id="bonusDropLabel" style="font-size:14px;font-weight:600;color:var(--navy,#1b263b);">
+              Drop your Excel file here or click to browse
+            </div>
+            <div style="font-size:12px;color:#8899aa;margin-top:5px;">Accepts .xlsx only</div>
             <input type="file" id="bonusFileInput" accept=".xlsx" style="display:none;"
               onchange="window._bon.onFileChange(this)">
-          </label>
-          <span id="bonusFileName" style="margin-left:10px;font-size:13px;color:var(--rp-muted);">No file chosen</span>
+          </div>
+
+          <div style="margin-top:16px;display:flex;gap:10px;align-items:center;">
+            <button id="bonusGenerateBtn" class="btn-primary" onclick="window._bon.generate(this)">
+              Generate Report
+            </button>
+            <button class="btn-secondary" onclick="window._bon.reset()" style="background:#f1f3f7;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;color:#556;">
+              Reset
+            </button>
+          </div>
+          <div id="bonusStatus" class="status-msg" style="margin-top:10px;" aria-live="polite"></div>
         </div>
-        <div style="margin-top:16px;">
-          <button id="bonusGenerateBtn" class="btn-primary" disabled
-            onclick="this.disabled=true; window._bon.generate(this)">
-            Generate Bonus Report
-          </button>
+
+        <!-- ── Results (hidden until data loaded) ── -->
+        <div id="bonusResults" style="display:none;margin-top:20px;">
+
+          <!-- Summary cards -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+            <div class="settings-card" style="text-align:center;padding:20px 12px;">
+              <div id="bonusCardCount" style="font-size:32px;font-weight:800;color:var(--navy,#1b263b);line-height:1;">—</div>
+              <div style="font-size:11px;color:#8899aa;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Qualifying Customers</div>
+            </div>
+            <div class="settings-card" style="text-align:center;padding:20px 12px;">
+              <div id="bonusCardTotal" style="font-size:18px;font-weight:800;color:var(--pms,#2563eb);line-height:1.2;">—</div>
+              <div style="font-size:11px;color:#8899aa;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Total Amount</div>
+            </div>
+            <div class="settings-card" style="text-align:center;padding:20px 12px;">
+              <div style="font-size:18px;font-weight:800;color:var(--ago,#f59e0b);line-height:1.2;">400,000 RWF</div>
+              <div style="font-size:11px;color:#8899aa;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Minimum Threshold</div>
+            </div>
+          </div>
+
+          <!-- Table card -->
+          <div class="settings-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <div class="settings-card-title" style="margin:0;">Customer Summary</div>
+              <button class="btn-primary" onclick="window._bon.download(this)">⬇ Download Excel</button>
+            </div>
+            <table class="nozzle-table" style="width:100%;">
+              <thead>
+                <tr>
+                  <th style="width:40px;text-align:center;">#</th>
+                  <th>Customer</th>
+                  <th style="text-align:right;">Total Amount</th>
+                </tr>
+              </thead>
+              <tbody id="bonusTableBody"></tbody>
+              <tfoot id="bonusTableFoot"></tfoot>
+            </table>
+          </div>
+
         </div>
-        <div id="bonusStatus" class="status-msg" style="margin-top:12px;" aria-live="polite"></div>
       </div>
     </section>
 

@@ -48,7 +48,17 @@ router.post('/filter', verifyJWT, requireRole(['owner', 'manager']), upload.sing
       return res.status(200).json({ message: 'No customers met the 400,000 RWF threshold.', count: 0 });
     }
 
-    // 5. Build formatted output Excel
+    // 5a. JSON preview mode — return data without generating Excel
+    const wantsJson = (req.headers['accept'] || '').includes('application/json');
+    if (wantsJson) {
+      return res.json({
+        summary,
+        count:       summary.length,
+        totalAmount: summary.reduce((s, r) => s + r.total, 0),
+      });
+    }
+
+    // 5b. Build formatted output Excel
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Summary');
 
