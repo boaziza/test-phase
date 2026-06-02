@@ -76,6 +76,11 @@
         Employee Report
       </a>
 
+      <a href="#" class="nav-item" data-section="bonuses" data-roles="owner,manager">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Bonuses
+      </a>
+
       <div class="nav-section-label">Account</div>
 
       <a href="#" class="nav-item" data-section="settings" data-roles="owner">
@@ -643,6 +648,34 @@
       </div><!-- /pom-layout -->
     </section>
 
+    <section id="section-bonuses" class="section" style="display:none;" data-roles="owner,manager">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title">Bonus Filter</h1>
+          <p class="section-sub">Upload a station sales Excel file to generate the bonus summary.</p>
+        </div>
+      </div>
+      <div class="settings-card" style="max-width:480px;">
+        <div class="settings-card-title">Upload Sales File</div>
+        <p class="settings-hint">Filters CASH, MTN MOMO and BANK CARD payments for customers starting with 1 or 7, keeps only those with total ≥ 400,000 RWF.</p>
+        <div class="settings-field" style="margin-top:16px;">
+          <label class="btn-primary" style="cursor:pointer;display:inline-block;">
+            Choose File
+            <input type="file" id="bonusFileInput" accept=".xlsx" style="display:none;"
+              onchange="window._bon.onFileChange(this)">
+          </label>
+          <span id="bonusFileName" style="margin-left:10px;font-size:13px;color:var(--rp-muted);">No file chosen</span>
+        </div>
+        <div style="margin-top:16px;">
+          <button id="bonusGenerateBtn" class="btn-primary" disabled
+            onclick="this.disabled=true; window._bon.generate(this)">
+            Generate Bonus Report
+          </button>
+        </div>
+        <div id="bonusStatus" class="status-msg" style="margin-top:12px;" aria-live="polite"></div>
+      </div>
+    </section>
+
     <!-- ─────────────────────────────────────────────────────────────────────
          SETTINGS  (owner only)
          Company name, fuel prices per station, password change.
@@ -1197,5 +1230,6 @@
   <script src="sections/settings.js"></script>
   <script src="sections/account.js"></script>
   <script src="sections/emp-report.js"></script>
+  <script src="sections/bonuses.js"></script>
 </body>
 </html>

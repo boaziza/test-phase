@@ -28,6 +28,7 @@ app.use('/api/nozzles',           require('./routes/nozzles'));
 app.use('/api/nozzle-readings',   require('./routes/nozzleReadings'));
 app.use('/api/teams',             require('./routes/authAppwrite/teams'));
 app.use('/api/accounts',          require('./routes/authAppwrite/accounts'));
+app.use('/api/bonuses',           require('./routes/bonuses'));
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 
