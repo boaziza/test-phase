@@ -19,11 +19,40 @@ let totalCash, totalPayments, gainPayments, listBC, listSFC, totalLoans;
   _profile = await requireAuth({ roles: ["pompiste"] });
   if (!_profile) return;
 
+  // Device lock check — pompiste must be on a registered work device
+  const deviceToken = localStorage.getItem("rp_device_token");
+  if (!deviceToken) {
+    _showDeviceBlocked();
+    return;
+  }
+
   const el = document.getElementById("welcomeMessage");
   if (el) el.textContent = `Welcome, ${_profile.name || ""}`;
 
   await initSettings();
 })();
+
+function _showDeviceBlocked() {
+  document.body.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                min-height:100vh;padding:32px;text-align:center;font-family:inherit;
+                background:#f8fafc;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"
+           style="margin-bottom:20px;">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <h2 style="font-size:20px;font-weight:700;color:#1e293b;margin:0 0 8px;">Device Not Registered</h2>
+      <p style="font-size:14px;color:#64748b;max-width:320px;margin:0 0 24px;">
+        This device is not authorised to submit reports.<br>
+        Ask your manager to register this device in Settings → Work Devices.
+      </p>
+      <button onclick="location.reload()"
+        style="padding:10px 24px;background:#2563eb;color:white;border:none;border-radius:8px;
+               font-size:14px;font-weight:600;cursor:pointer;">
+        Try Again
+      </button>
+    </div>`;
+}
 
 // ── SETTINGS + NOZZLE LOAD ─────────────────────────────────────
 async function initSettings() {

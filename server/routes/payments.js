@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {db, ID, Query} = require('../appwrite');
 const { verifyJWT, requireRole } = require('../middleware/auth');
+const { requireDevice } = require('../middleware/deviceAuth');
 
 const COLLECTION_PAYMENTS_ID = process.env.APPWRITE_PAYMENTS_ID;
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID;
@@ -10,7 +11,7 @@ const DATABASE_ID = process.env.APPWRITE_DATABASE_ID;
  * POST /payment
  * Creates a new payment.
  */
-router.post('/', verifyJWT, requireRole(['owner','manager','pompiste']), async (req, res) => {
+router.post('/', verifyJWT, requireDevice, requireRole(['owner','manager','pompiste']), async (req, res) => {
   try {
     const body = req.body;
 

@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const { db, ID, Query } = require('../appwrite');
 const { verifyJWT, requireRole } = require('../middleware/auth');
+const { requireDevice } = require('../middleware/deviceAuth');
 
 const DB  = process.env.APPWRITE_DATABASE_ID;
 const COL = process.env.APPWRITE_NOZZLE_READINGS_ID;
@@ -39,7 +40,7 @@ router.get('/', verifyJWT, requireRole(['owner', 'manager', 'pompiste']), async 
 });
 
 // POST /api/nozzle-readings  — create or upsert a reading by shiftKey
-router.post('/', verifyJWT, requireRole(['owner', 'manager', 'pompiste']), async (req, res) => {
+router.post('/', verifyJWT, requireDevice, requireRole(['owner', 'manager', 'pompiste']), async (req, res) => {
   try {
     const {
       nozzleId, pumpId, stationId, companyId = '',

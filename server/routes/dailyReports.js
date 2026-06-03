@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {db, ID, Query} = require('../appwrite');
 const { verifyJWT, requireRole } = require('../middleware/auth');
+const { requireDevice } = require('../middleware/deviceAuth');
 
 const COLLECTION_DAILY_REPORTS_ID = process.env.APPWRITE_DAILY_REPORTS_ID;
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID;
@@ -11,7 +12,7 @@ const DATABASE_ID = process.env.APPWRITE_DATABASE_ID;
  * Creates a new daily report.
  */
 
-router.post('/', verifyJWT, requireRole(['owner','manager','pompiste']), async (req, res) => {
+router.post('/', verifyJWT, requireDevice, requireRole(['owner','manager','pompiste']), async (req, res) => {
   try {
     const body = req.body;
 

@@ -66,6 +66,8 @@ window.apiFetch = async function apiFetch(endpoint, options = {}) {
     ...options.headers,
   };
   if (jwt) headers["Authorization"] = `Bearer ${jwt}`;
+  const deviceToken = localStorage.getItem("rp_device_token");
+  if (deviceToken) headers["X-Device-Token"] = deviceToken;
 
   const url = `${window._AW.SERVER_URL}${endpoint}`;
   const res  = await fetch(url, { ...options, headers });

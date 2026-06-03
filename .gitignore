@@ -19,3 +19,4 @@ check_db_v3.py
 database_export.json
 memory
 backfill_nozzle_readings.py
+scripts

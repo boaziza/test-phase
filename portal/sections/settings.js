@@ -21,6 +21,7 @@
     btn.classList.add("active");
     if (tab === "teams")     loadTeams();
     if (tab === "employees") loadPeopleTab();
+    if (tab === "devices")   initDevicesTab();
     if (tab === "pumps")     initPumpsTab();
   }
 
@@ -958,6 +959,160 @@
   function openModal(id)  { const el = document.getElementById(id); if (el) el.style.display = "flex"; }
   function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
 
+  // ─────────────────────────────────────────────────────────
+  // WORK DEVICES
+  // ─────────────────────────────────────────────────────────
+
+  const DEVICE_KEY = "rp_device_token";
+  let _thisDeviceDocId = null;
+
+  async function initDevicesTab() {
+    // Populate station selector (owner only)
+    const stationRow = document.getElementById("deviceStationRow");
+    const stationSel = document.getElementById("deviceStationSelect");
+    if (state.role === "owner" && stationRow && stationSel) {
+      stationRow.style.display = "";
+      stationSel.innerHTML = (state.stations ?? []).map(s =>
+        `<option value="${s.$id}">${s.name}</option>`
+      ).join("");
+    } else if (stationRow) {
+      stationRow.style.display = "none";
+    }
+
+    await _checkThisDevice();
+    await _loadAllDevices();
+  }
+
+  async function _checkThisDevice() {
+    const token     = localStorage.getItem(DEVICE_KEY);
+    const statusEl  = document.getElementById("deviceCurrentStatus");
+    const revokeBtn = document.getElementById("revokeThisDeviceBtn");
+    if (!statusEl) return;
+
+    if (!token) {
+      statusEl.innerHTML = `<span class="device-status-badge device-unregistered">Not registered</span>`;
+      if (revokeBtn) revokeBtn.style.display = "none";
+      _thisDeviceDocId = null;
+      return;
+    }
+
+    try {
+      const data = await apiFetch(`/devices`).then(r => r.json());
+      const match = (data.devices ?? []).find(d => d.token === token);
+      if (match) {
+        _thisDeviceDocId = match.$id;
+        statusEl.innerHTML = `<span class="device-status-badge device-registered">Registered</span>
+          <span class="device-status-label">${match.label || "This device"} · ${match.stationId}</span>`;
+        if (revokeBtn) revokeBtn.style.display = "";
+      } else {
+        localStorage.removeItem(DEVICE_KEY);
+        statusEl.innerHTML = `<span class="device-status-badge device-unregistered">Token not found on server — cleared</span>`;
+        if (revokeBtn) revokeBtn.style.display = "none";
+        _thisDeviceDocId = null;
+      }
+    } catch {
+      statusEl.innerHTML = `<span class="device-status-badge" style="background:#f1f5f9;">Could not check status</span>`;
+    }
+  }
+
+  async function registerThisDevice() {
+    const statusEl  = document.getElementById("deviceRegStatus");
+    const stationId = state.role === "owner"
+      ? document.getElementById("deviceStationSelect")?.value
+      : state.profile.stationId;
+    const label = document.getElementById("deviceLabel")?.value.trim() || "Work Computer";
+
+    if (!stationId) { showStatus(statusEl, "Select a station first.", "error"); return; }
+
+    let token = localStorage.getItem(DEVICE_KEY);
+    if (!token) {
+      token = crypto.randomUUID();
+      localStorage.setItem(DEVICE_KEY, token);
+    }
+
+    try {
+      const res  = await apiFetch("/devices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, stationId, label }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      showStatus(statusEl, "✓ Device registered.", "success");
+      await _checkThisDevice();
+      await _loadAllDevices();
+    } catch (err) {
+      showStatus(statusEl, "Error: " + err.message, "error");
+    }
+  }
+
+  async function revokeThisDevice() {
+    if (!_thisDeviceDocId) return;
+    const statusEl = document.getElementById("deviceRegStatus");
+    try {
+      const res = await apiFetch(`/devices/${_thisDeviceDocId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error((await res.json()).error);
+      localStorage.removeItem(DEVICE_KEY);
+      _thisDeviceDocId = null;
+      showStatus(statusEl, "Device revoked.", "success");
+      await _checkThisDevice();
+      await _loadAllDevices();
+    } catch (err) {
+      showStatus(statusEl, "Error: " + err.message, "error");
+    }
+  }
+
+  async function _loadAllDevices() {
+    const listEl = document.getElementById("devicesList");
+    if (!listEl) return;
+    listEl.innerHTML = `<div class="loading">Loading...</div>`;
+    try {
+      const data = await apiFetch("/devices").then(r => r.json());
+      const devices = data.devices ?? [];
+      if (!devices.length) {
+        listEl.innerHTML = `<div class="people-empty">No devices registered yet.</div>`;
+        return;
+      }
+
+      const stationNameMap = {};
+      (state.stations ?? []).forEach(s => { stationNameMap[s.$id] = s.name; });
+
+      listEl.innerHTML = devices.map(d => `
+        <div class="people-person-row">
+          <div class="people-person-info">
+            <span class="people-person-name">${d.label || "Work Computer"}</span>
+            <span class="people-person-email">${stationNameMap[d.stationId] || d.stationId} · registered by ${d.registeredBy || "—"}</span>
+          </div>
+          <span class="device-status-badge ${d.token === localStorage.getItem(DEVICE_KEY) ? "device-registered" : "device-other"}">
+            ${d.token === localStorage.getItem(DEVICE_KEY) ? "This device" : "Other device"}
+          </span>
+          <div class="people-person-actions">
+            <button class="btn-danger btn-sm" data-device-id="${d.$id}" data-device-token="${d.token}">Revoke</button>
+          </div>
+        </div>`).join("");
+
+      listEl.querySelectorAll("[data-device-id]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          try {
+            const res = await apiFetch(`/devices/${btn.dataset.deviceId}`, { method: "DELETE" });
+            if (!res.ok) throw new Error((await res.json()).error);
+            if (btn.dataset.deviceToken === localStorage.getItem(DEVICE_KEY)) {
+              localStorage.removeItem(DEVICE_KEY);
+            }
+            await _checkThisDevice();
+            await _loadAllDevices();
+          } catch (err) {
+            window._dash.toast("Error: " + err.message, "error");
+            btn.disabled = false;
+          }
+        });
+      });
+    } catch {
+      listEl.innerHTML = `<div class="people-empty">Error loading devices.</div>`;
+    }
+  }
+
   // Register
   window._sections.settings = function loadSettings() {
     const { state } = window._dash;
@@ -976,6 +1131,7 @@
     promptCreateEmployee, handleCreateEmployee, openEditEmployee, handleEditEmployee,
     promptResetPassword, handleResetPassword, handleChangeOwnPassword,
     promptMoveEmployee, handleMoveEmployee,
+    registerThisDevice, revokeThisDevice,
     // pumps & nozzles
     onPumpsStationChange,
     selectPump,

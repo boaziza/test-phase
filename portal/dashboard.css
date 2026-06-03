@@ -1423,6 +1423,27 @@ tbody tr:hover td { background: var(--rp-surface-off); }
   .section-settings .settings-field select { width: 100%; }
 }
 
+/* ── WORK DEVICES TAB ───────────────────────────────────── */
+.section-settings .device-current-status {
+  margin-bottom: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.section-settings .device-status-badge {
+  font-size: 11px; font-weight: 700; padding: 3px 10px;
+  border-radius: 20px; white-space: nowrap;
+}
+.section-settings .device-registered {
+  background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;
+}
+.section-settings .device-unregistered {
+  background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
+}
+.section-settings .device-other {
+  background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0;
+}
+.section-settings .device-status-label {
+  font-size: 12px; color: var(--rp-muted);
+}
+
 /* ── PUMPS & NOZZLES TAB ─────────────────────────────────── */
 
 .pumps-split {

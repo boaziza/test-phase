@@ -764,6 +764,7 @@
           <button class="tab-btn" onclick="window._set.switchTab('employees', this)">People</button>
           <button class="tab-btn" onclick="window._set.switchTab('account', this)">Account</button>
           <button class="tab-btn" onclick="window._set.switchTab('pumps', this)">Pumps &amp; Nozzles</button>
+          <button class="tab-btn" onclick="window._set.switchTab('devices', this)">Work Devices</button>
         </div>
         <!-- TAB 1: FUEL PRICES -->
         <div id="tab-fuel" class="tab-content">
@@ -868,6 +869,33 @@
               </div>
             </div>
             <div id="pumpsStatus" class="status-msg" aria-live="polite" style="margin-top:12px;"></div>
+          </div>
+        </div>
+
+        <!-- TAB: WORK DEVICES -->
+        <div id="tab-devices" class="tab-content" style="display:none;">
+          <div class="settings-card">
+            <div class="settings-card-title">This Device</div>
+            <p class="settings-hint">Register the computer you are currently on as a work device for a station. Pompistes can only submit shifts from registered devices.</p>
+            <div id="deviceCurrentStatus" class="device-current-status"></div>
+            <div class="settings-field" id="deviceStationRow">
+              <label for="deviceStationSelect">Station</label>
+              <select id="deviceStationSelect"></select>
+            </div>
+            <div class="settings-field">
+              <label for="deviceLabel">Label</label>
+              <input type="text" id="deviceLabel" placeholder="e.g. Front desk computer">
+            </div>
+            <div class="settings-actions">
+              <button class="btn-primary" onclick="window._set.registerThisDevice()">Register This Device</button>
+              <button class="btn-danger" id="revokeThisDeviceBtn" style="display:none;" onclick="window._set.revokeThisDevice()">Revoke This Device</button>
+            </div>
+            <div id="deviceRegStatus" class="status-msg" aria-live="polite"></div>
+          </div>
+          <div class="settings-card" style="margin-top:16px;">
+            <div class="settings-card-title">All Registered Devices</div>
+            <p class="settings-hint">Revoke a device to immediately block pompiste access from it.</p>
+            <div id="devicesList"><div class="loading">Loading...</div></div>
           </div>
         </div>
 

@@ -1,14 +1,50 @@
 require('dotenv').config();
-const express = require('express');
-const cors    = require('cors');
+const express   = require('express');
+const cors      = require('cors');
+const helmet    = require('helmet');
+const rateLimit = require('express-rate-limit');
+
+const { requireDevice } = require('./middleware/deviceAuth');
 
 const app = express();
-app.use(express.json());
+
+// ── Security headers (helmet) ─────────────────────────────────
+app.use(helmet());
+
+// ── CORS — only allow the real frontend ──────────────────────
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://boaziza.github.io')
+  .split(',').map(o => o.trim()).filter(Boolean);
+
 app.use(cors({
-  origin: '*',
+  origin: (origin, cb) => {
+    // Allow requests with no origin (mobile apps, curl, Render health checks)
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
 }));
 
+app.use(express.json({ limit: '50kb' }));
+
+// ── Rate limiting ─────────────────────────────────────────────
+const globalLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,  // 1 minute
+  max:      200,             // 200 requests per IP per minute
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message: { error: 'Too many requests.' },
+});
+app.use(globalLimiter);
+
+const accountsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max:      20,              // max 20 requests per IP per window
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message: { error: 'Too many requests — please try again in 15 minutes.' },
+});
+
+// ── Routes ────────────────────────────────────────────────────
 app.use('/api/companies',         require('./routes/companies'));
 app.use('/api/stations',          require('./routes/stations'));
 app.use('/api/users',             require('./routes/users'));
@@ -27,8 +63,9 @@ app.use('/api/pumps',             require('./routes/pumps'));
 app.use('/api/nozzles',           require('./routes/nozzles'));
 app.use('/api/nozzle-readings',   require('./routes/nozzleReadings'));
 app.use('/api/teams',             require('./routes/authAppwrite/teams'));
-app.use('/api/accounts',          require('./routes/authAppwrite/accounts'));
+app.use('/api/accounts',          accountsLimiter, require('./routes/authAppwrite/accounts'));
 app.use('/api/bonuses',           require('./routes/bonuses'));
+app.use('/api/devices',           require('./routes/devices'));
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 
