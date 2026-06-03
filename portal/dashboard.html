@@ -76,7 +76,7 @@
         Employee Report
       </a>
 
-      <a href="#" class="nav-item" data-section="bonuses" data-roles="owner,manager">
+      <a href="#" class="nav-item" data-section="bonuses" data-roles="manager">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         Bonuses
       </a>
@@ -167,6 +167,13 @@
          POMPISTES  (manager only)
     ───────────────────────────────────────────────────────────────────────── -->
     <section id="section-pompistes" class="section" style="display:none;" data-roles="manager">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title">Pompistes</h1>
+          <p class="section-sub">Manage pump attendants at your station.</p>
+        </div>
+        <button class="btn-primary" id="addPompisteBtn">+ Add Pompiste</button>
+      </div>
       <div id="pompistesList" class="table-wrap">
         <div class="loading-state">Loading…</div>
       </div>
@@ -564,7 +571,8 @@
           <div class="pom-inputs">
             <div class="pom-input-group">
               <label for="er-email">Employee Email</label>
-              <input type="email" id="er-email" placeholder="employee@email.com" autocomplete="off"/>
+              <input type="email" id="er-email" placeholder="employee@email.com" autocomplete="off" list="er-emailList"/>
+              <datalist id="er-emailList"></datalist>
             </div>
             <div class="pom-input-group">
               <label for="er-logDate">Date</label>
@@ -648,7 +656,7 @@
       </div><!-- /pom-layout -->
     </section>
 
-    <section id="section-bonuses" class="section" style="display:none;" data-roles="owner,manager">
+    <section id="section-bonuses" class="section" style="display:none;" data-roles="manager">
       <div class="section-header">
         <div>
           <h1 class="section-title">Bonus Filter</h1>
@@ -752,23 +760,16 @@
       <div class="settings-wrapper">
         <div class="tabs">
           <button class="tab-btn active" onclick="window._set.switchTab('fuel', this)">Fuel Prices</button>
-          <button class="tab-btn" onclick="window._set.switchTab('teams', this)">Teams</button>
-          <button class="tab-btn" onclick="window._set.switchTab('employees', this)">Employees</button>
+          <!-- <button class="tab-btn" onclick="window._set.switchTab('teams', this)">Teams</button> -->
+          <button class="tab-btn" onclick="window._set.switchTab('employees', this)">People</button>
           <button class="tab-btn" onclick="window._set.switchTab('account', this)">Account</button>
           <button class="tab-btn" onclick="window._set.switchTab('pumps', this)">Pumps &amp; Nozzles</button>
         </div>
         <!-- TAB 1: FUEL PRICES -->
         <div id="tab-fuel" class="tab-content">
           <div class="settings-card">
-            <div class="settings-card-title">Station Settings</div>
-            <div class="settings-field" id="stationSelectorRow">
-              <label for="settingsStationSelect">Station</label>
-              <select id="settingsStationSelect"></select>
-            </div>
-            <div class="settings-field">
-              <label for="stationName">Station Name</label>
-              <input type="text" id="stationName" placeholder="e.g. Station Total Kigali">
-            </div>
+            <div class="settings-card-title">Company-Wide Settings</div>
+            <p class="settings-hint">Applies to all stations.</p>
             <div class="settings-field">
               <label for="momoFeeInput">MoMo Fee (%)</label>
               <input type="number" id="momoFeeInput" placeholder="e.g. 0.5" step="0.1" min="0" max="100">
@@ -788,7 +789,7 @@
             <div id="fuelStatus" class="status-msg" aria-live="polite"></div>
           </div>
         </div>
-        <!-- TAB 2: TEAMS -->
+        <!-- TAB 2: TEAMS (not in use)
         <div id="tab-teams" class="tab-content" style="display:none;">
           <div class="settings-card">
             <div class="settings-card-title">Teams</div>
@@ -801,11 +802,12 @@
             <div id="teamsStatus" class="status-msg" aria-live="polite"></div>
           </div>
         </div>
-        <!-- TAB 3: EMPLOYEES -->
+        -->
+        <!-- TAB 3: PEOPLE -->
         <div id="tab-employees" class="tab-content" style="display:none;">
           <div class="settings-card">
-            <div class="settings-card-title">Create Employee Account</div>
-            <p class="settings-hint">Create a new pompiste account. The employee can sign in immediately using these credentials.</p>
+            <div class="settings-card-title">Create Account</div>
+            <p class="settings-hint">Create a manager or pompiste. They will be prompted to change their password on first login.</p>
             <div class="settings-field">
               <label for="empName">Full Name</label>
               <input type="text" id="empName" placeholder="e.g. Jean Claude">
@@ -818,14 +820,25 @@
               <label for="empPassword">Password</label>
               <input type="password" id="empPassword" placeholder="Min. 8 characters" minlength="8">
             </div>
+            <div class="settings-field">
+              <label for="empRole">Role</label>
+              <select id="empRole">
+                <option value="pompiste">Pompiste</option>
+                <option value="manager">Manager</option>
+              </select>
+            </div>
+            <div class="settings-field">
+              <label for="empStation">Station</label>
+              <select id="empStation"></select>
+            </div>
             <div class="settings-actions">
               <button class="btn-primary" id="createEmpBtn" onclick="window._set.promptCreateEmployee()">Create Account</button>
             </div>
             <div id="empStatus" class="status-msg" aria-live="polite"></div>
           </div>
           <div class="settings-card" style="margin-top:16px;">
-            <div class="settings-card-title">All Accounts</div>
-            <p class="settings-hint">View and manage accounts. Gain shown for <strong id="perfMonthLabel">current month</strong>.</p>
+            <div class="settings-card-title">People by Station</div>
+            <p class="settings-hint">Gain shown for <strong id="perfMonthLabel">current month</strong>.</p>
             <div id="allEmployeesList"><div class="loading">Loading...</div></div>
           </div>
         </div>
@@ -1125,10 +1138,6 @@
         <label for="editEmpName">Full Name</label>
         <input type="text" id="editEmpName" placeholder="e.g. Jean Claude">
       </div>
-      <div class="popup-form-field">
-        <label for="editEmpStation">Station</label>
-        <input type="text" id="editEmpStation" placeholder="e.g. Station Total Kigali">
-      </div>
       <button id="saveEmployeeEdit" onclick="this.disabled=true; window._set.handleEditEmployee(this).finally(()=>this.disabled=false)">Save</button>
       <button id="cancelEmployeeEdit" onclick="closeDialog('editEmployeePopup')">Cancel</button>
     </div>
@@ -1153,6 +1162,28 @@
       <p class="popup-sub" id="createEmpPopupSub"></p>
       <button id="confirmCreateEmp" onclick="closeDialog('confirmCreateEmpPopup'); window._set.handleCreateEmployee(this)">Create</button>
       <button id="cancelCreateEmp" onclick="closeDialog('confirmCreateEmpPopup')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Move Pompiste Modal -->
+  <div class="modal-overlay" id="movePompisteModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Move to Station</h2>
+        <button class="modal-close" data-close="movePompisteModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="movePompisteMsg" style="margin-bottom:12px;font-size:13px;color:var(--rp-muted)"></p>
+        <div class="form-row">
+          <label>New Station</label>
+          <select id="moveToStation"></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="movePompisteModal">Cancel</button>
+        <button class="btn-primary" id="confirmMoveBtn"
+          onclick="this.disabled=true; window._set.handleMoveEmployee(this)">Move</button>
+      </div>
     </div>
   </div>
 

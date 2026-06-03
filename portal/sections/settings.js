@@ -20,63 +20,30 @@
     if (tabEl) tabEl.style.display = "block";
     btn.classList.add("active");
     if (tab === "teams")     loadTeams();
-    if (tab === "employees") loadAllEmployees();
+    if (tab === "employees") loadPeopleTab();
     if (tab === "pumps")     initPumpsTab();
   }
 
   async function loadFuelSettings() {
     try {
-      const stationRes  = await apiFetch(`/stations`).then(r => r.json());
-      const stationDocs = stationRes.stations ?? [];
-      const isOwner     = state.role === "owner";
+      const stationRes  = await apiFetch('/stations').then(r => r.json());
+      const stationDocs = (stationRes.stations ?? []).filter(s => !s.archived);
+      state.stations    = stationDocs;
 
-      // Populate station selector for owner
-      const selRow = document.getElementById("stationSelectorRow");
-      const sel    = document.getElementById("settingsStationSelect");
-      if (selRow) selRow.style.display = isOwner ? "" : "none";
-      if (isOwner && sel) {
-        sel.innerHTML = stationDocs.map(s =>
-          `<option value="${s.$id}">${s.name}</option>`
-        ).join("");
-        sel.onchange = () => loadStationPrices(sel.value, stationDocs);
-      }
+      if (!stationDocs.length) return;
+      const first = stationDocs[0];
 
-      const targetId  = isOwner ? sel?.value : state.profile.stationId;
-      const stationDoc = stationDocs.find(s => s.$id === targetId) || stationDocs[0];
-      if (stationDoc) {
-        const stationEl = document.getElementById("stationName");
-        if (stationEl) stationEl.value = stationDoc.name ?? "";
-        const momoEl = document.getElementById("momoFeeInput");
-        if (momoEl) momoEl.value = stationDoc.momoFee ?? "";
-      }
+      const momoEl = document.getElementById("momoFeeInput");
+      if (momoEl) momoEl.value = first.momoFee ?? "";
 
-      await loadStationPrices(targetId || stationDoc?.$id);
-    } catch (err) { console.error("Could not load settings:", err); }
-  }
-
-  async function loadStationPrices(stationId, stationDocs) {
-    if (!stationId) return;
-    try {
-      // Update station name/momo when selection changes (owner only)
-      if (stationDocs) {
-        const s = stationDocs.find(d => d.$id === stationId);
-        if (s) {
-          const el = document.getElementById("stationName");
-          if (el) el.value = s.name ?? "";
-          const momoEl = document.getElementById("momoFeeInput");
-          if (momoEl) momoEl.value = s.momoFee ?? "";
-        }
-      }
-      const fuelPrices = await apiFetch(`/fuel-prices?station=${stationId}`).then(r => r.json());
-      const priceDocs  = fuelPrices.fuelPriceHistory ?? fuelPrices.fuelPrices ?? [];
+      const fuelPrices = await apiFetch(`/fuel-prices?station=${first.$id}`).then(r => r.json());
+      const priceDocs  = fuelPrices.fuelPriceHistory ?? [];
       const sorted     = [...priceDocs].sort((a, b) => (b.effectiveFrom || "").localeCompare(a.effectiveFrom || ""));
-      const pms = sorted.find(p => p.fuelType === "PMS");
-      const ago = sorted.find(p => p.fuelType === "AGO");
       const pmsEl = document.getElementById("pmsPriceInput");
       const agoEl = document.getElementById("agoPriceInput");
-      if (pmsEl) pmsEl.value = pms?.price ?? "";
-      if (agoEl) agoEl.value = ago?.price ?? "";
-    } catch (err) { console.error("Could not load prices:", err); }
+      if (pmsEl) pmsEl.value = sorted.find(p => p.fuelType === "PMS")?.price ?? "";
+      if (agoEl) agoEl.value = sorted.find(p => p.fuelType === "AGO")?.price ?? "";
+    } catch (err) { console.error("Could not load settings:", err); }
   }
 
   async function handleSavePrices(btn) {
@@ -85,113 +52,59 @@
   }
 
   async function saveFuelPrices() {
-    const profile   = state.profile;
-    const isOwner   = state.role === "owner";
-    const stationId = isOwner
-      ? document.getElementById("settingsStationSelect")?.value
-      : profile.stationId;
-    const userId = profile.userId;
-    const pmsEl = document.getElementById("pmsPriceInput");
-    const agoEl = document.getElementById("agoPriceInput");
-    const stationEl = document.getElementById("stationName");
-    const momoEl = document.getElementById("momoFeeInput");
-    const pmsPrice = parseInt(pmsEl?.value || "");
-    const agoPrice = parseInt(agoEl?.value || "");
-    const stationName = stationEl?.value.trim() || "";
-    const momoFeePercent = parseFloat(momoEl?.value || "");
+    const stations = (state.stations ?? []).filter(s => !s.archived);
+    const userId   = state.profile.userId;
+    const pmsPrice = parseInt(document.getElementById("pmsPriceInput")?.value || "");
+    const agoPrice = parseInt(document.getElementById("agoPriceInput")?.value || "");
+    const momoFeePercent = parseFloat(document.getElementById("momoFeeInput")?.value || "");
     const statusEl = document.getElementById("fuelStatus");
+
     if (!pmsPrice || !agoPrice) { showStatus(statusEl, "Both fuel prices are required.", "error"); return; }
     if (isNaN(momoFeePercent) || momoFeePercent < 0) { showStatus(statusEl, "Enter a valid MoMo fee percentage.", "error"); return; }
+    if (!stations.length) { showStatus(statusEl, "No stations found.", "error"); return; }
+
+    const formattedDate = new Date().toLocaleDateString('en-CA');
+
     try {
-
-      await apiFetch(`/stations/${stationId}`,{
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: stationName, momoFee: momoFeePercent })
-      });      
-
-      const now = new Date();
-      const formattedDate = now.toLocaleDateString('en-CA');
-      console.log(formattedDate);
-
-      const fuelPrices = await apiFetch(`/fuel-prices/me`).then(res => res.json());
-      const priceDocs = fuelPrices.fuelPriceHistory?.documents ?? fuelPrices.fuelPriceHistory ?? [];
-
-      const sorted     = [...priceDocs].sort((a, b) => (b.effectiveFrom || "").localeCompare(a.effectiveFrom || ""));
-      const pmsPriceDoc = sorted.find(p => p.fuelType === "PMS");
-      const agoPriceDoc = sorted.find(p => p.fuelType === "AGO");
-
-      if (sorted.length < 2) {
-
-        await apiFetch(`/fuel-prices`,{
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stationId, effectiveFrom: formattedDate, fuelType: "PMS", price: pmsPrice, setByUserId: userId })
-        });
-
-        await apiFetch(`/fuel-prices`,{
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stationId, effectiveFrom: formattedDate, fuelType: "AGO", price: agoPrice, setByUserId: userId })
-        });
-
-      } else if ( pmsPriceDoc.price !== pmsPrice && agoPriceDoc.price !== agoPrice){
-
-        await apiFetch(`/fuel-prices/${pmsPriceDoc.$id}`,{
+      await Promise.all(stations.map(async (station) => {
+        await apiFetch(`/stations/${station.$id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ effectiveTo: formattedDate })
+          body: JSON.stringify({ momoFee: momoFeePercent }),
         });
 
-        await apiFetch(`/fuel-prices`,{
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stationId, effectiveFrom: formattedDate, fuelType: "PMS", price: pmsPrice, setByUserId: userId })
-        });
+        const fuelPrices = await apiFetch(`/fuel-prices?station=${station.$id}`).then(r => r.json());
+        const priceDocs  = fuelPrices.fuelPriceHistory ?? [];
+        const sorted     = [...priceDocs].sort((a, b) => (b.effectiveFrom || "").localeCompare(a.effectiveFrom || ""));
+        const pmsPriceDoc = sorted.find(p => p.fuelType === "PMS");
+        const agoPriceDoc = sorted.find(p => p.fuelType === "AGO");
 
-        await apiFetch(`/fuel-prices/${agoPriceDoc.$id}`,{
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({  effectiveTo: formattedDate})
-        });
+        if (!pmsPriceDoc || pmsPriceDoc.price !== pmsPrice) {
+          if (pmsPriceDoc) await apiFetch(`/fuel-prices/${pmsPriceDoc.$id}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ effectiveTo: formattedDate }),
+          });
+          await apiFetch(`/fuel-prices`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ stationId: station.$id, effectiveFrom: formattedDate, fuelType: "PMS", price: pmsPrice, setByUserId: userId }),
+          });
+        }
 
-        await apiFetch(`/fuel-prices`,{
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stationId, effectiveFrom: formattedDate, fuelType: "AGO", price: agoPrice, setByUserId: userId })
-        });
+        if (!agoPriceDoc || agoPriceDoc.price !== agoPrice) {
+          if (agoPriceDoc) await apiFetch(`/fuel-prices/${agoPriceDoc.$id}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ effectiveTo: formattedDate }),
+          });
+          await apiFetch(`/fuel-prices`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ stationId: station.$id, effectiveFrom: formattedDate, fuelType: "AGO", price: agoPrice, setByUserId: userId }),
+          });
+        }
+      }));
 
-      } else if (pmsPriceDoc.price !== pmsPrice ) {
-        
-        await apiFetch(`/fuel-prices/${pmsPriceDoc.$id}`,{
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ effectiveTo: formattedDate })
-        });
-
-        await apiFetch(`/fuel-prices`,{
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stationId, effectiveFrom: formattedDate, fuelType: "PMS", price: pmsPrice, setByUserId: userId })
-        });
-
-      } else if (agoPriceDoc.price !== agoPrice ) {
-
-        await apiFetch(`/fuel-prices/${agoPriceDoc.$id}`,{
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({  effectiveTo: formattedDate})
-        });
-
-        await apiFetch(`/fuel-prices`,{
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stationId, effectiveFrom: formattedDate, fuelType: "AGO", price: agoPrice, setByUserId: userId })
-        });
-      }
-      showStatus(statusEl, "✓ Settings saved successfully.", "success");
+      showStatus(statusEl, "✓ Settings saved for all stations.", "success");
     } catch (err) {
-      showStatus(statusEl, "Error saving prices: " + err.message, "error");
+      showStatus(statusEl, "Error saving settings: " + err.message, "error");
     }
   }
 
@@ -374,54 +287,70 @@
   }
 
   function promptCreateEmployee() {
-    const nameEl = document.getElementById("empName");
-    const emailEl = document.getElementById("empEmail");
-    const passwordEl = document.getElementById("empPassword");
-    const name = nameEl?.value.trim();
-    const email = emailEl?.value.trim();
-    const password = passwordEl?.value;
-    const statusEl = document.getElementById("empStatus");
+    const name      = document.getElementById("empName")?.value.trim();
+    const email     = document.getElementById("empEmail")?.value.trim();
+    const password  = document.getElementById("empPassword")?.value;
+    const role      = document.getElementById("empRole")?.value || "pompiste";
+    const stationId = document.getElementById("empStation")?.value;
+    const statusEl  = document.getElementById("empStatus");
     if (!name || !email || !password) { showStatus(statusEl, "Name, email, and password are all required.", "error"); return; }
     if (password.length < 8) { showStatus(statusEl, "Password must be at least 8 characters.", "error"); return; }
+    if (!stationId) { showStatus(statusEl, "Please select a station.", "error"); return; }
     const subEl = document.getElementById("createEmpPopupSub");
-    if (subEl) subEl.textContent = `Create account for ${name} (${email})?`;
+    if (subEl) subEl.textContent = `Create ${role} account for ${name} (${email})?`;
     openDialog("confirmCreateEmpPopup");
   }
 
   async function handleCreateEmployee(btn) {
-    const nameEl = document.getElementById("empName");
-    const emailEl = document.getElementById("empEmail");
-    const passwordEl = document.getElementById("empPassword");
-    const name = nameEl?.value.trim();
-    const email = emailEl?.value.trim();
-    const password = passwordEl?.value;
-    const statusEl = document.getElementById("empStatus");
+    const nameEl      = document.getElementById("empName");
+    const emailEl     = document.getElementById("empEmail");
+    const passwordEl  = document.getElementById("empPassword");
+    const name        = nameEl?.value.trim();
+    const email       = emailEl?.value.trim();
+    const password    = passwordEl?.value;
+    const role        = document.getElementById("empRole")?.value || "pompiste";
+    const stationId   = document.getElementById("empStation")?.value || null;
+    const statusEl    = document.getElementById("empStatus");
     btn.disabled = true;
     try {
       const res = await apiFetch(`/accounts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role: "pompiste" }),
+        body: JSON.stringify({ name, email, password, role, stationId }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create employee");
+      if (!res.ok) throw new Error(data.error || "Failed to create account");
       if (nameEl) nameEl.value = "";
       if (emailEl) emailEl.value = "";
       if (passwordEl) passwordEl.value = "";
-      showStatus(statusEl, `✓ Account created for ${name} (${email}).`, "success");
+      showStatus(statusEl, `✓ ${role} account created for ${name}.`, "success");
       loadAllEmployees();
     } catch (err) { showStatus(statusEl, "Error: " + err.message, "error"); }
     finally { btn.disabled = false; }
   }
 
+  async function loadPeopleTab() {
+    if (!state.stations?.length) {
+      const res = await apiFetch('/stations').then(r => r.json());
+      state.stations = (res.stations ?? []).filter(s => !s.archived);
+    }
+    const stationEl = document.getElementById("empStation");
+    if (stationEl) {
+      stationEl.innerHTML = (state.stations ?? []).map(s =>
+        `<option value="${s.$id}">${s.name}</option>`
+      ).join("");
+    }
+    await loadAllEmployees();
+  }
+
   async function loadAllEmployees() {
     const listEl = document.getElementById("allEmployeesList");
+    if (!listEl) return;
     listEl.innerHTML = `<div class="loading">Loading...</div>`;
-    const now = new Date();
-    const monthYear  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const monthLabel = now.toLocaleString("default", { month: "long", year: "numeric" });
-    const hintEl = document.getElementById("perfMonthLabel");
-    if (hintEl) hintEl.textContent = monthLabel;
+    const now       = new Date();
+    const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const hintEl    = document.getElementById("perfMonthLabel");
+    if (hintEl) hintEl.textContent = now.toLocaleString("default", { month: "long", year: "numeric" });
     try {
       const [usersRes, gainRes] = await Promise.all([
         apiFetch(`/users`),
@@ -432,56 +361,172 @@
       if (!usersRes.ok) throw new Error(usersData.error);
 
       const gainMap = {};
-      if (gainData.gains) {
-        gainData.gains.forEach(d => { gainMap[d.email] = d.gainPayments ?? 0; });
+      (gainData.gains ?? []).forEach(d => { gainMap[d.email] = d.gainPayments ?? 0; });
+
+      // exclude owners from the people list
+      const users = (usersData.users ?? []).filter(u => u.role !== "owner");
+      if (!users.length) { listEl.innerHTML = `<div class="people-empty">No accounts found.</div>`; return; }
+
+      const stationNameMap = {};
+      (state.stations ?? []).forEach(s => { stationNameMap[s.$id] = s.name; });
+
+      const byStation = {};
+      users.forEach(u => {
+        const sid = u.stationId || "__none__";
+        if (!byStation[sid]) byStation[sid] = [];
+        byStation[sid].push(u);
+      });
+
+      const unassigned = byStation["__none__"] ?? [];
+
+      const renderAccordion = (label, members, defaultOpen = false) => {
+        const manager   = members.find(u => u.role === "manager");
+        const pompistes = members.filter(u => u.role === "pompiste");
+        const summary   = [
+          manager ? "1 manager" : "no manager",
+          `${pompistes.length} pompiste${pompistes.length !== 1 ? "s" : ""}`,
+        ].join(" · ");
+
+        return `
+          <div class="people-acc">
+            <button class="people-acc-hdr ${defaultOpen ? "open" : ""}">
+              <span class="people-acc-chevron">${defaultOpen ? "▼" : "▶"}</span>
+              <span class="people-acc-name">${label}</span>
+              <span class="people-acc-summary">${summary}</span>
+            </button>
+            <div class="people-acc-body" style="display:${defaultOpen ? "block" : "none"};">
+              <div class="people-role-label">Manager</div>
+              ${manager
+                ? _renderPersonRow(manager, gainMap, false)
+                : `<div class="people-empty-role">No manager assigned</div>`}
+              <div class="people-role-label" style="margin-top:10px;">Pompistes</div>
+              ${pompistes.length
+                ? pompistes.map(u => _renderPersonRow(u, gainMap, true)).join("")
+                : `<div class="people-empty-role">No pompistes assigned</div>`}
+            </div>
+          </div>`;
+      };
+
+      const sections = (state.stations ?? []).map((s, i) =>
+        renderAccordion(s.name, byStation[s.$id] ?? [], i === 0)
+      );
+
+      if (unassigned.length) {
+        sections.push(renderAccordion("Unassigned", unassigned, false));
       }
 
-      if (usersData.users.length === 0) { listEl.innerHTML = `<div class="loading">No accounts found.</div>`; return; }
-      listEl.innerHTML = usersData.users.map(u => {
-        const hasGain  = u.email in gainMap;
-        const gain     = gainMap[u.email] ?? 0;
-        const gainHtml = hasGain
-          ? `<span class="emp-gain ${gain >= 0 ? "gain-pos" : "gain-neg"}">${gain >= 0 ? "+" : ""}${gain.toLocaleString()} RWF</span>`
-          : `<span class="emp-gain emp-gain-none">No shifts</span>`;
-        const station    = u.stationId || "";
-        const safeName   = (u.name || "").replace(/'/g, "\\'");
-        const safeStation = station.replace(/'/g, "\\'");
-        return `<div class="admin-row">
-          <span class="admin-email">${u.name || "—"}</span>
-          <span class="admin-role">${u.email}</span>
-          ${station ? `<span class="emp-station">${station}</span>` : ""}
-          ${gainHtml}
-          <button class="btn-edit btn-primary" onclick="window._set.openEditEmployee('${u.$id}', '${safeName}', '${safeStation}')">Edit</button>
-          <button class="btn-reset-pwd" onclick="window._set.promptResetPassword('${u.$id}', '${safeName}')">Reset Pwd</button>
-        </div>`;
-      }).join("");
-    } catch { listEl.innerHTML = `<div class="loading">Error loading accounts.</div>`; }
+      listEl.innerHTML = sections.join("");
+
+      // accordion toggle
+      listEl.querySelectorAll(".people-acc-hdr").forEach(hdr => {
+        hdr.addEventListener("click", () => {
+          const body    = hdr.nextElementSibling;
+          const chevron = hdr.querySelector(".people-acc-chevron");
+          const open    = body.style.display !== "none";
+          body.style.display = open ? "none" : "block";
+          chevron.textContent = open ? "▶" : "▼";
+          hdr.classList.toggle("open", !open);
+        });
+      });
+
+      // row actions
+      listEl.querySelectorAll("[data-action='edit-person']").forEach(btn =>
+        btn.addEventListener("click", () =>
+          openEditEmployee(btn.dataset.docId, btn.dataset.name))
+      );
+      listEl.querySelectorAll("[data-action='reset-pwd-person']").forEach(btn =>
+        btn.addEventListener("click", () =>
+          promptResetPassword(btn.dataset.userId, btn.dataset.name))
+      );
+      listEl.querySelectorAll("[data-action='move-person']").forEach(btn =>
+        btn.addEventListener("click", () =>
+          promptMoveEmployee(btn.dataset.docId, btn.dataset.userId, btn.dataset.name))
+      );
+    } catch { listEl.innerHTML = `<div class="people-empty">Error loading accounts.</div>`; }
+  }
+
+  function _renderPersonRow(u, gainMap, showMove) {
+    const hasGain  = u.email in gainMap;
+    const gain     = gainMap[u.email] ?? 0;
+    const gainHtml = hasGain
+      ? `<span class="emp-gain ${gain >= 0 ? "gain-pos" : "gain-neg"}">${gain >= 0 ? "+" : ""}${gain.toLocaleString()} RWF</span>`
+      : `<span class="emp-gain emp-gain-none">No shifts</span>`;
+    const docId    = u.$id;
+    const userId   = u.userId || u.$id;
+    const safeName = (u.name || "").replace(/"/g, "&quot;");
+    return `<div class="people-person-row">
+      <div class="people-person-info">
+        <span class="people-person-name">${u.name || "—"}</span>
+        <span class="people-person-email">${u.email}</span>
+      </div>
+      ${gainHtml}
+      <div class="people-person-actions">
+        ${showMove ? `<button class="btn-ghost btn-sm" data-action="move-person" data-doc-id="${docId}" data-user-id="${userId}" data-name="${safeName}">Move</button>` : ""}
+        <button class="btn-ghost btn-sm" data-action="edit-person" data-doc-id="${docId}" data-name="${safeName}">Edit</button>
+        <button class="btn-reset-pwd" data-action="reset-pwd-person" data-user-id="${userId}" data-name="${safeName}">Reset Pwd</button>
+      </div>
+    </div>`;
+  }
+
+  let _pendingMove = null;
+
+  function promptMoveEmployee(docId, userId, name) {
+    _pendingMove = { docId, userId };
+    const msgEl = document.getElementById("movePompisteMsg");
+    if (msgEl) msgEl.textContent = `Move "${name}" to a different station.`;
+    const sel = document.getElementById("moveToStation");
+    if (sel) sel.innerHTML = (state.stations ?? []).map(s => `<option value="${s.$id}">${s.name}</option>`).join("");
+    openModal("movePompisteModal");
+  }
+
+  async function handleMoveEmployee(btn) {
+    if (!_pendingMove) { btn.disabled = false; return; }
+    const { docId, userId } = _pendingMove;
+    _pendingMove = null;
+    const newStationId = document.getElementById("moveToStation")?.value;
+    if (!newStationId) { btn.disabled = false; return; }
+    try {
+      await Promise.all([
+        apiFetch(`/users/${docId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stationId: newStationId }),
+        }),
+        apiFetch(`/accounts/${encodeURIComponent(userId)}/prefs`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stationId: newStationId }),
+        }),
+      ]);
+      closeModal("movePompisteModal");
+      window._dash.toast("Employee moved successfully.", "success");
+      loadAllEmployees();
+    } catch (err) {
+      window._dash.toast("Error: " + err.message, "error");
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   let _setEditUserId = null;
 
-  function openEditEmployee(userId, name, station) {
-    _setEditUserId = userId;
+  function openEditEmployee(docId, name) {
+    _setEditUserId = docId;
     const nameEl = document.getElementById("editEmpName");
     if (nameEl) nameEl.value = name;
-    const stationEl = document.getElementById("editEmpStation");
-    if (stationEl) stationEl.value = station;
     openDialog("editEmployeePopup");
   }
 
   async function handleEditEmployee(btn) {
     if (!_setEditUserId) return;
-    const nameEl = document.getElementById("editEmpName");
-    const stationEl = document.getElementById("editEmpStation");
-    const name = nameEl?.value.trim();
-    const station = stationEl?.value.trim();
+    const name   = document.getElementById("editEmpName")?.value.trim();
     const userId = _setEditUserId;
     btn.disabled = true;
     try {
       const res = await apiFetch(`/users/${userId}`, {
         method: "PATCH",
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, stationId:  station  })
+        body: JSON.stringify({ name })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -930,6 +975,7 @@
     promptAddMember, handleAddMember, promptRemoveMember, handleRemoveMember,
     promptCreateEmployee, handleCreateEmployee, openEditEmployee, handleEditEmployee,
     promptResetPassword, handleResetPassword, handleChangeOwnPassword,
+    promptMoveEmployee, handleMoveEmployee,
     // pumps & nozzles
     onPumpsStationChange,
     selectPump,

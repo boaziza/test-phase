@@ -240,7 +240,17 @@
     }
   }
 
-  window._sections["emp-report"] = function () {};
+  window._sections["emp-report"] = async function () {
+    try {
+      const data = await window._dash.apiFetch("/users").then(r => r.json());
+      const datalist = document.getElementById("er-emailList");
+      if (!datalist) return;
+      const pompistes = (data.users ?? []).filter(u => u.role === "pompiste");
+      datalist.innerHTML = pompistes
+        .map(u => `<option value="${u.email}" label="${u.name || ""}">`)
+        .join("");
+    } catch { /* non-fatal — user can still type manually */ }
+  };
   window._er = { displayDetails, selectEntry, download };
 
 })();
