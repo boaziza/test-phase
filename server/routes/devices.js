@@ -49,7 +49,6 @@ router.post('/', verifyJWT, requireRole(['owner', 'manager']), async (req, res) 
       stationId,
       companyId:    req.user.companyId || '',
       label:        label || 'Work Computer',
-      registeredAt: new Date().toISOString(),
       registeredBy: req.user.email,
     });
 
