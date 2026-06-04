@@ -232,16 +232,12 @@ async function calculateIndex() {
   // Continuity check: each nozzle's start must match the previous shift's end
   try {
     const matched = await _checkIndexMatch(entries, logDate, shift);
-    if (matched.ok) {
+    if (matched) {
       toast("All indices match ✓", "success");
       _nozzleEntries = entries;
       _calcDone = true;
     } else {
-      toast(
-        `Pump ${matched.pumpNumber} / Nozzle ${matched.nozzleNumber}: ` +
-        `start reading ${matched.got} doesn't match previous end ${matched.expected}.`,
-        "error"
-      );
+      toast("Index mismatch — correct your values before continuing.", "error");
       totalVente = undefined;
       _calcDone  = false;
       renderResultCards({});
@@ -265,33 +261,24 @@ async function _checkIndexMatch(entries, date, shift) {
   const todayReadings     = todayRes.readings     ?? [];
   const yesterdayReadings = yesterdayRes.readings ?? [];
 
-  // Build: nozzleId → most recent known end reading
-  // Yesterday Night sets the baseline; today's readings (earlier shifts) override
-  const validEnds = {};
-  yesterdayReadings.filter(r => r.shift === "Night").forEach(r => {
-    validEnds[r.nozzleId] = r.endReading;
-  });
-  todayReadings.forEach(r => {
-    validEnds[r.nozzleId] = r.endReading;
-  });
+  // All known readings for this nozzle, oldest first
+  // Yesterday Night is baseline, today's shifts come after
+  const allReadings = [...yesterdayReadings, ...todayReadings];
 
-  for (const { nozzleId, pumpNumber, nozzleNumber, startReading } of entries) {
-    if (!startReading) continue;
-    const expected = validEnds[nozzleId];
-    if (expected == null) continue;
-    if (startReading !== expected) {
-      return {
-        ok: false,
-        nozzleId,
-        pumpNumber,
-        nozzleNumber,
-        expected,
-        got: startReading,
-      };
-    }
+  for (const { nozzleId, startReading } of entries) {
+    if (!startReading) continue; // nozzle not used this shift, skip
+
+    // Walk back through history to find the last non-zero end reading
+    const lastNonZero = allReadings
+      .filter(r => r.nozzleId === nozzleId && r.endReading > 0)
+      .at(-1); // last one in chronological order
+
+    if (!lastNonZero) continue; // all zeros or no history = fresh start, pass
+
+    if (startReading !== lastNonZero.endReading) return false; // mismatch
   }
 
-  return { ok: true };
+  return true;
 }
 
 function _getPrevDate(dateStr) {
