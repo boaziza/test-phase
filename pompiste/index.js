@@ -232,12 +232,16 @@ async function calculateIndex() {
   // Continuity check: each nozzle's start must match the previous shift's end
   try {
     const matched = await _checkIndexMatch(entries, logDate, shift);
-    if (matched) {
+    if (matched.ok) {
       toast("All indices match ✓", "success");
       _nozzleEntries = entries;
       _calcDone = true;
     } else {
-      toast("Index mismatch — correct your values before continuing.", "error");
+      toast(
+        `Pump ${matched.pumpNumber} / Nozzle ${matched.nozzleNumber}: ` +
+        `start reading ${matched.got} doesn't match previous end ${matched.expected}.`,
+        "error"
+      );
       totalVente = undefined;
       _calcDone  = false;
       renderResultCards({});
@@ -271,14 +275,23 @@ async function _checkIndexMatch(entries, date, shift) {
     validEnds[r.nozzleId] = r.endReading;
   });
 
-  for (const { nozzleId, startReading } of entries) {
-    if (!startReading) continue;                // 0 → first reading, skip check
+  for (const { nozzleId, pumpNumber, nozzleNumber, startReading } of entries) {
+    if (!startReading) continue;
     const expected = validEnds[nozzleId];
-    if (expected == null) continue;             // no prior reading for this nozzle → skip
-    if (startReading !== expected) return false; // mismatch
+    if (expected == null) continue;
+    if (startReading !== expected) {
+      return {
+        ok: false,
+        nozzleId,
+        pumpNumber,
+        nozzleNumber,
+        expected,
+        got: startReading,
+      };
+    }
   }
 
-  return true;
+  return { ok: true };
 }
 
 function _getPrevDate(dateStr) {
