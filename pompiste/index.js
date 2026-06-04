@@ -746,7 +746,7 @@ function addLoan() {
   const amount  = parseInt(document.getElementById("loan-amount").value);
   if (!plate && !company) { toast("Enter a plate or company", "warning"); return; }
   if (plate && !_plateRegex.test(plate)) { toast("Plate format must be: RAB 123A", "warning"); return; }
-  if (!amount || amount <= 0) { toast("Enter a valid amount", "warning"); return; }
+  if (!amount || amount === 0) { toast("Enter a valid amount", "warning"); return; }
   loans.push({ plate: plate ? _normalizePlate(plate) : "", company, amount });
   renderLoanChips();
   clearLoan();

@@ -147,7 +147,7 @@
                                 </div>
                                 <div class="entry-field">
                                     <label for="fiche-amount">Amount</label>
-                                    <input class="loan" type="number" id="fiche-amount" placeholder="e.g. 50000" min="1" onkeydown="if(event.key==='Enter'){event.preventDefault();addFiche();}">
+                                    <input class="loan" type="number" id="fiche-amount" placeholder="e.g. 50000" min="1" oninput="if(this.value<0)this.value=''" onkeydown="if(event.key==='Enter'){event.preventDefault();addFiche();}">
                                 </div>
                                 <div class="entry-actions">
                                     <button type="button" class="action-btn" onclick="addFiche()">Add Fiche</button>
@@ -174,7 +174,7 @@
                                 </div>
                                 <div class="entry-field">
                                     <label for="loan-amount">Amount</label>
-                                    <input class="loan" type="number" id="loan-amount" placeholder="e.g. 50000" min="1" onkeydown="if(event.key==='Enter'){event.preventDefault();addLoan();}">
+                                    <input class="loan" type="number" id="loan-amount" placeholder="e.g. 50000" onkeydown="if(event.key==='Enter'){event.preventDefault();addLoan();}">
                                 </div>
                                 <div class="entry-actions">
                                     <button type="button" class="action-btn" onclick="addLoan()">Add Loan</button>
