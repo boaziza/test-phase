@@ -170,6 +170,22 @@
 
       _activeSitDoc = doc;
 
+      // Collapse all shift readings into one row per nozzle:
+      // startReading = lowest start seen that day, endReading = highest end seen that day
+      const nozzleMap = {};
+      readings.forEach(r => {
+        const id = r.nozzleId;
+        if (!nozzleMap[id]) { nozzleMap[id] = { ...r }; return; }
+        if (Number(r.startReading) < Number(nozzleMap[id].startReading))
+          nozzleMap[id].startReading = r.startReading;
+        if (Number(r.endReading) > Number(nozzleMap[id].endReading))
+          nozzleMap[id].endReading = r.endReading;
+      });
+      const collapsedReadings = Object.values(nozzleMap).map(r => ({
+        ...r,
+        venteLitres: Number(r.endReading) - Number(r.startReading),
+      }));
+
       // Header
       const d = new Date(date + "T00:00:00");
       const loadedDateEl = document.getElementById("loadedDate");
@@ -186,7 +202,7 @@
       if (sheetDateEl) sheetDateEl.textContent = date;
 
       // Render nozzle reading rows
-      _renderNozzleRows(nozzles, readings);
+      _renderNozzleRows(nozzles, collapsedReadings);
 
       // Sales totals + payment fields
       const ventePms = Number(doc.venteLitresPms) || 0;
