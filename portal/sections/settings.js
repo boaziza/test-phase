@@ -1001,8 +1001,9 @@
       const match = (data.devices ?? []).find(d => d.token === token);
       if (match) {
         _thisDeviceDocId = match.$id;
+        const stNm = (window._dash.state.stations ?? []).find(s => s.$id === match.stationId)?.name || "—";
         statusEl.innerHTML = `<span class="device-status-badge device-registered">Registered</span>
-          <span class="device-status-label">${match.label || "This device"} · ${match.stationId}</span>`;
+          <span class="device-status-label">${match.label || "This device"} · ${stNm}</span>`;
         if (revokeBtn) revokeBtn.style.display = "";
       } else {
         localStorage.removeItem(DEVICE_KEY);
@@ -1081,13 +1082,13 @@
         <div class="people-person-row">
           <div class="people-person-info">
             <span class="people-person-name">${d.label || "Work Computer"}</span>
-            <span class="people-person-email">${stationNameMap[d.stationId] || d.stationId} · registered by ${d.registeredBy || "—"}</span>
+            <span class="people-person-email">${stationNameMap[d.stationId] || "—"} · registered by ${d.registeredBy || "—"}</span>
           </div>
           <span class="device-status-badge ${d.token === localStorage.getItem(DEVICE_KEY) ? "device-registered" : "device-other"}">
             ${d.token === localStorage.getItem(DEVICE_KEY) ? "This device" : "Other device"}
           </span>
           <div class="people-person-actions">
-            <button class="btn-danger btn-sm" data-device-id="${d.$id}" data-device-token="${d.token}">Revoke</button>
+            <button class="btn-danger btn-sm" data-device-id="${d.$id}">Revoke</button>
           </div>
         </div>`).join("");
 
@@ -1097,7 +1098,7 @@
           try {
             const res = await apiFetch(`/devices/${btn.dataset.deviceId}`, { method: "DELETE" });
             if (!res.ok) throw new Error((await res.json()).error);
-            if (btn.dataset.deviceToken === localStorage.getItem(DEVICE_KEY)) {
+            if (btn.dataset.deviceId === _thisDeviceDocId) {
               localStorage.removeItem(DEVICE_KEY);
             }
             await _checkThisDevice();

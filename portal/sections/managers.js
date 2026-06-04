@@ -29,7 +29,7 @@
         <tbody>${slice.map(m => `<tr>
           <td>${m.name || "—"}</td>
           <td>${m.email}</td>
-          <td>${stationMap[m.stationId] || m.stationId || "—"}</td>
+          <td>${stationMap[m.stationId] || "—"}</td>
           <td class="row-actions">
             <button class="btn-ghost btn-sm"  data-action="edit"      data-uid="${m.userId}" data-name="${(m.name||m.email).replace(/"/g,'&quot;')}">Edit</button>
             <button class="btn-ghost btn-sm"  data-action="reset-pwd" data-uid="${m.userId}" data-name="${(m.name||m.email).replace(/"/g,'&quot;')}">Reset pwd</button>
