@@ -191,8 +191,8 @@ router.post('/', verifyJWT, requireDevice, requireRole(['pompiste']), async (req
       gainPayments,
       totalLoans:    payments.totalLoans    || 0,
       totalVente:    totals.totalVente      || 0,
-      listBC:        payments.listBC        || [],
-      listSFC:       payments.listSFC       || [],
+      listBC:        (payments.listBC  || []).map(v => String(v)),
+      listSFC:       (payments.listSFC || []).map(v => String(v)),
     });
     created.push({ col: C_PAY, id: pay.$id });
 
