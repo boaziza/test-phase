@@ -171,16 +171,27 @@
       _activeSitDoc = doc;
 
       // Collapse all shift readings into one row per nozzle:
-      // startReading = lowest start seen that day, endReading = highest end seen that day
+      // startReading = Morning shift's start, endReading = last submitted shift's end
+      const SHIFT_ORDER = { Morning: 0, Afternoon: 1, Evening: 2, Night: 3 };
       const nozzleMap = {};
-      readings.forEach(r => {
-        const id = r.nozzleId;
-        if (!nozzleMap[id]) { nozzleMap[id] = { ...r }; return; }
-        if (Number(r.startReading) < Number(nozzleMap[id].startReading))
-          nozzleMap[id].startReading = r.startReading;
-        if (Number(r.endReading) > Number(nozzleMap[id].endReading))
-          nozzleMap[id].endReading = r.endReading;
-      });
+      readings
+        .filter(r => r.startReading > 0 || r.endReading > 0) // skip unused 0,0,0 entries
+        .forEach(r => {
+          const id    = r.nozzleId;
+          const order = SHIFT_ORDER[r.shift] ?? 99;
+          if (!nozzleMap[id]) {
+            nozzleMap[id] = { ...r, _firstOrder: order, _lastOrder: order };
+            return;
+          }
+          if (order < nozzleMap[id]._firstOrder) {
+            nozzleMap[id].startReading = r.startReading;
+            nozzleMap[id]._firstOrder  = order;
+          }
+          if (order > nozzleMap[id]._lastOrder) {
+            nozzleMap[id].endReading = r.endReading;
+            nozzleMap[id]._lastOrder = order;
+          }
+        });
       const collapsedReadings = Object.values(nozzleMap).map(r => ({
         ...r,
         venteLitres: Number(r.endReading) - Number(r.startReading),
@@ -192,11 +203,22 @@
       if (loadedDateEl) loadedDateEl.textContent = isNaN(d) ? date
         : d.toLocaleString("default", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
+      // 3-stage status pill
+      const hasReadings = collapsedReadings.length > 0;
+      const hasStock    = !!(pmsDoc || agoDoc);
+      const stage = doc.done
+        ? { text: "Complete ✓",  bg: "var(--pms-bg)", color: "var(--pms)" }
+        : hasReadings && hasStock
+        ? { text: "Not Complete", bg: "#fef3c7",       color: "#b45309"    }
+        : hasReadings
+        ? { text: "Shifts Done",  bg: "#fff7ed",       color: "#ea580c"    }
+        : { text: "Pending",      bg: "#f1f5f9",       color: "#64748b"    };
+
       const pill = document.getElementById("donePill");
       if (pill) {
-        pill.textContent      = doc.done ? "Done ✓" : "Pending";
-        pill.style.background = doc.done ? "var(--pms-bg)" : "#fff7ed";
-        pill.style.color      = doc.done ? "var(--pms)"    : "var(--ago)";
+        pill.textContent      = stage.text;
+        pill.style.background = stage.bg;
+        pill.style.color      = stage.color;
       }
       const sheetDateEl = document.getElementById("sheetDate");
       if (sheetDateEl) sheetDateEl.textContent = date;
@@ -254,12 +276,27 @@
 
   // ── Nozzle row rendering ─────────────────────────────────────────────────────
 
+  const _pumpColors = ["#64748b","#22c55e","#3b82f6","#f59e0b","#f97316","#8b5cf6","#ec4899"];
+
+  function _pBadge(pumpNumber) {
+    const color = _pumpColors[pumpNumber] || _pumpColors[0];
+    return `<span style="font-weight:700;color:${color}">P${pumpNumber || "?"}</span>`;
+  }
+
+  function _fuelCols(fuelType, value) {
+    const v = value != null ? fmt(value) : "—";
+    return [
+      fuelType === "PMS"      ? v : "—",
+      fuelType === "AGO"      ? v : "—",
+      fuelType === "Kerosene" ? v : "-",
+    ];
+  }
+
   function _renderNozzleRows(nozzles, readings, editing = false) {
     const tbody = document.getElementById("nozzleReadingsBody");
     if (!tbody) return;
 
     if (editing) {
-      // Edit mode: driven by active nozzles — deactivated pumps excluded
       if (!nozzles.length) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:1rem;color:var(--text-muted,#888);">No active nozzles configured. Add pumps and nozzles in Settings → Pumps &amp; Nozzles.</td></tr>`;
         return;
@@ -268,27 +305,27 @@
       readings.forEach(r => { readingMap[r.nozzleId] = r; });
 
       tbody.innerHTML = nozzles.map(n => {
-        const r       = readingMap[n.$id] || {};
-        const nLabel  = n.label || `Nozzle ${n.nozzleNumber}`;
-        const fuelCls = n.fuelType === "PMS" ? "pms" : n.fuelType === "AGO" ? "ago" : "kero";
-        const start   = r.startReading != null ? r.startReading : "";
-        const end     = r.endReading   != null ? r.endReading   : "";
+        const r     = readingMap[n.$id] || {};
+        const start = r.startReading != null ? r.startReading : "";
+        const end   = r.endReading   != null ? r.endReading   : "";
+        const [essCell, gasCell, keroCell] = [
+          n.fuelType === "PMS"      ? `<td class="nozzle-sold" data-nozzle="${n.$id}">—</td>` : `<td>—</td>`,
+          n.fuelType === "AGO"      ? `<td class="nozzle-sold" data-nozzle="${n.$id}">—</td>` : `<td>—</td>`,
+          n.fuelType === "Kerosene" ? `<td class="nozzle-sold" data-nozzle="${n.$id}">—</td>` : `<td>-</td>`,
+        ];
         return `<tr data-nozzle-id="${n.$id}" data-fuel-type="${n.fuelType}" data-pump-id="${n.pumpId}" data-pump-number="${n.pumpNumber}" data-nozzle-number="${n.nozzleNumber}">
-          <td>${n.pumpNumber}</td>
+          <td>${_pBadge(n.pumpNumber)}</td>
           <td>${n.pumpLabel}</td>
-          <td>${nLabel}</td>
-          <td><span class="fuel-pill ${fuelCls}">${n.fuelType}</span></td>
           <td><input type="number" class="sit-edit-input nozzle-end"   data-nozzle="${n.$id}" value="${Number(end)   || 0}" oninput="window._sit.recalcNozzles()"></td>
           <td><input type="number" class="sit-edit-input nozzle-start" data-nozzle="${n.$id}" value="${Number(start) || 0}" oninput="window._sit.recalcNozzles()"></td>
-          <td class="nozzle-sold" data-nozzle="${n.$id}">—</td>
+          ${essCell}${gasCell}${keroCell}
         </tr>`;
       }).join("");
       recalcNozzles();
       return;
     }
 
-    // View mode: driven by saved readings — shows all recorded data including
-    // readings for pumps that have since been deactivated
+    // View mode
     if (!readings.length) {
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:1rem;color:var(--text-muted,#888);">No nozzle readings recorded for this date.</td></tr>`;
       return;
@@ -297,15 +334,15 @@
     tbody.innerHTML = [...readings]
       .sort((a, b) => (a.pumpNumber - b.pumpNumber) || (a.nozzleNumber - b.nozzleNumber))
       .map(r => {
-        const fuelCls = r.fuelType === "PMS" ? "pms" : r.fuelType === "AGO" ? "ago" : "kero";
+        const [ess, gas, kero] = _fuelCols(r.fuelType, r.venteLitres);
         return `<tr data-nozzle-id="${r.nozzleId}" data-fuel-type="${r.fuelType}">
-          <td>${r.pumpNumber  || "—"}</td>
-          <td>Pump ${r.pumpNumber  || "?"}</td>
-          <td>Nozzle ${r.nozzleNumber || "?"}</td>
-          <td><span class="fuel-pill ${fuelCls}">${r.fuelType}</span></td>
+          <td>${_pBadge(r.pumpNumber)}</td>
+          <td>${r.pumpLabel || `Pump ${r.pumpNumber || "?"}`}</td>
           <td>${r.endReading   != null ? fmt(r.endReading)   : "—"}</td>
           <td>${r.startReading != null ? fmt(r.startReading) : "—"}</td>
-          <td>${r.venteLitres  != null ? fmt(r.venteLitres)  : "—"}</td>
+          <td>${ess}</td>
+          <td>${gas}</td>
+          <td>${kero}</td>
         </tr>`;
       }).join("");
   }

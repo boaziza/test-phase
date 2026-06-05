@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="history.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231b263b'/><text x='16' y='23' text-anchor='middle' font-family='Arial' font-weight='900' font-size='16' fill='white'>RP</text></svg>">
+  <title>My History — Rapport Pompiste</title>
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header class="site-header">
+    <div class="header-brand">
+      <div class="brand-icon">RP</div>
+      <div>
+        <div class="brand-title">My History</div>
+        <div class="brand-sub" id="welcomeMessage"></div>
+      </div>
+    </div>
+    <a href="/test-phase/pompiste/" class="btn-back">← Back to Shift</a>
+  </header>
+
+  <!-- ── FILTER BAR ── -->
+  <div class="hist-filter-bar">
+    <input type="month" id="monthPicker" class="hist-month-input">
+    <button class="action-btn" onclick="loadHistory()">Load</button>
+    <div class="hist-summary-chips" id="summaryChips" style="display:none;">
+      <span class="hist-chip" id="chipShifts"></span>
+      <span class="hist-chip hist-chip-vente" id="chipVente"></span>
+      <span class="hist-chip" id="chipGain"></span>
+    </div>
+  </div>
+
+  <!-- ── CONTENT ── -->
+  <main class="hist-main" id="histMain">
+    <div class="hist-empty">
+      <div class="hist-empty-icon">📋</div>
+      <div class="hist-empty-title">No shifts loaded</div>
+      <div class="hist-empty-sub">Choose a month and press Load</div>
+    </div>
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <div class="hist-footer" id="histFooter" style="display:none;">
+    <button class="action-btn" onclick="downloadPDF()">⬇ Download PDF</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0/dist/iife/sdk.js"></script>
+  <script src="../shared/config.js"></script>
+  <script src="../shared/auth.js"></script>
+  <script src="../shared/utils.js"></script>
+  <script src="history.js"></script>
+</body>
+</html>

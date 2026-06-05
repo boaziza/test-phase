@@ -152,10 +152,11 @@
 
   async function loadStockHistory() {
     if (_historyLoaded) return;
-    const { apiFetch } = window._dash;
+    const { apiFetch, state } = window._dash;
+    const stationId = state.viewingStation?.$id || state.profile?.stationId || "";
     const listEl = document.getElementById("histEntryList");
     try {
-      const data = await apiFetch(`/stock-daily?limit=100`).then(r => r.json());
+      const data = await apiFetch(`/stock-daily?limit=100${stationId ? `&station=${stationId}` : ""}`).then(r => r.json());
       const docs  = data.stockDaily?.documents ?? data.stockDaily ?? [];
 
       const byDate = {};
@@ -436,7 +437,7 @@
             initialStock: initPms, receivedLitres: recvPms, physicalStock: physPms,
             theoryStock: theoryPms, gainFuel: gainPms }),
         }),
-        apiFetch(`/stock-daily${_histActivDoc.agoDocId}`, {
+        apiFetch(`/stock-daily/${_histActivDoc.agoDocId}`, {
           method: "PATCH", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             initialStock: initAgo, receivedLitres: recvAgo, physicalStock: physAgo,

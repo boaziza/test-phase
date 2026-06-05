@@ -1,0 +1,159 @@
+/* History page — delta styles on top of index.css */
+
+body { padding-bottom: 72px; }
+
+/* ── Filter bar ─────────────────────────────────────────── */
+.hist-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 58px;
+  z-index: 90;
+}
+
+.hist-month-input {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  font-family: inherit;
+}
+.hist-month-input:focus { border-color: var(--navy); }
+
+/* ── Summary chips ──────────────────────────────────────── */
+.hist-summary-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.hist-chip {
+  background: #f1f5f9;
+  color: var(--muted);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.hist-chip-vente { background: #eff6ff; color: #1d4ed8; }
+.hist-chip-gain  { background: #f0fdf4; color: #16a34a; }
+.hist-chip-loss  { background: #fef2f2; color: #dc2626; }
+
+/* ── Main ───────────────────────────────────────────────── */
+.hist-main {
+  max-width: 680px;
+  margin: 20px auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Empty state ────────────────────────────────────────── */
+.hist-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+.hist-empty-icon  { font-size: 40px; margin-bottom: 12px; }
+.hist-empty-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.hist-empty-sub   { font-size: 13px; }
+
+/* ── Shift card ─────────────────────────────────────────── */
+.hist-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  page-break-inside: avoid;
+}
+
+.hist-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .12s;
+}
+.hist-card-header:hover { background: #f8fafc; }
+
+.hist-chevron {
+  font-size: 10px;
+  color: var(--muted);
+  transition: transform .2s;
+}
+
+.hist-card-body {
+  border-top: 1px solid var(--border);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Section label ──────────────────────────────────────── */
+.hist-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+/* ── Financials grid ────────────────────────────────────── */
+.hist-fin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.hist-fin-item {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.hist-fin-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+.hist-fin-val   { font-size: 13px; font-weight: 700; }
+
+/* ── Footer ─────────────────────────────────────────────── */
+.hist-footer {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #fff;
+  border-top: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Back button ────────────────────────────────────────── */
+.btn-back {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .15s;
+}
+.btn-back:hover { background: rgba(255,255,255,0.22); }
+
+/* ── Mobile ─────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .hist-fin-grid { grid-template-columns: repeat(2, 1fr); }
+  .hist-filter-bar { padding: 10px 14px; }
+  .hist-main { padding: 0 10px; margin: 12px auto; }
+}

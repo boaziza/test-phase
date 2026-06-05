@@ -381,194 +381,42 @@ async function situation() {
     const yyyy      = selectedDate.getFullYear();
     const monthYear = `${yyyy}-${mm}`;
 
-    // Duplicate check
-    const dupCheck = await apiFetch(`/daily-reports/me?logDate=${logDate}&email=${email}&shift=${shift}`).then(r => r.json());
-    if (dupCheck.dailyReport.documents.length > 0) {
-      toast("You already submitted this shift. Contact admin if a resubmission is needed.", "warning");
-      return;
-    }
+    const activeEntries = _nozzleEntries.filter(e => e.startReading > 0 || e.endReading > 0);
 
-    // Save gain record
-    const gainRes = await apiFetch("/gain-pompiste", {
+    const res = await apiFetch("/shift-submit", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({
-        companyId, stationId, userId, email,
-        employeeName: employee,
-        monthYear, logDate,
-        gainKey:     `${stationId}_${userId}_${monthYear}`,
+        shift, logDate, monthYear,
+        email, employeeName: employee, companyId, stationId, userId,
         gainPayments,
-      }),
-    });
-    if (!gainRes.ok) throw new Error("Failed to save gain: " + (await gainRes.text()));
-
-    // POST one nozzle reading per nozzle
-    await Promise.all(_nozzleEntries.map(entry =>
-      apiFetch("/nozzle-readings", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
-          nozzleId:     entry.nozzleId,
-          pumpId:       entry.pumpId,
-          stationId,
-          companyId,
-          fuelType:     entry.fuelType,
-          pumpNumber:   entry.pumpNumber,
-          nozzleNumber: entry.nozzleNumber,
-          startReading: entry.startReading,
-          endReading:   entry.endReading,
-          venteLitres:  entry.venteLitres,
-          logDate,
-          shift,
-          userId,
-          email,
-          employeeName: employee,
-        }),
-      })
-    ));
-
-    // Create or update situation doc (accumulate totals across shifts)
-    const sitResponse = await apiFetch(`/situation/me?logDate=${logDate}`).then(r => r.json());
-    const sitDocs     = sitResponse.situation.documents;
-
-    let situationWritten = false;
-
-    const sitAccum = (existing) => ({
-      momo:           momo           + (existing.momo           || 0),
-      momoLoss:       momoLoss       + (existing.momoLoss       || 0),
-      totalFiche:     totalFiche     + (existing.totalFiche     || 0),
-      bon:            bon            + (existing.bon            || 0),
-      spFuelCard:     spFuelCard     + (existing.spFuelCard     || 0),
-      bankCard:       bankCard       + (existing.bankCard       || 0),
-      totalCash:      totalCash      + (existing.totalCash      || 0),
-      totalLoans:     totalLoans     + (existing.totalLoans     || 0),
-      totalPayments:  totalPayments  + (existing.totalPayments  || 0),
-      gainPayments:   gainPayments   + (existing.gainPayments   || 0),
-      venteLitresPms: venteLitresPms + (existing.venteLitresPms || 0),
-      totalPms:       totalPms       + (existing.totalPms       || 0),
-      venteLitresAgo: venteLitresAgo + (existing.venteLitresAgo || 0),
-      totalAgo:       totalAgo       + (existing.totalAgo       || 0),
-      totalVente:     totalVente     + (existing.totalVente     || 0),
-      pmsPrice,
-      agoPrice,
-    });
-
-    if (shift === "Morning") {
-      if (sitDocs.length === 0) {
-        await apiFetch("/situation", {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({
-            companyId, stationId,
-            situationKey: `${stationId}_${logDate}`,
-            momo, momoLoss, totalFiche, bon, spFuelCard, bankCard,
-            totalCash, totalLoans, totalPayments, gainPayments,
-            venteLitresPms, totalPms, venteLitresAgo, totalAgo, totalVente,
-            pmsPrice, agoPrice, logDate,
-          }),
-        });
-      } else {
-        await apiFetch(`/situation/${sitDocs[0].$id}`, {
-          method:  "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify(sitAccum(sitDocs[0])),
-        });
-      }
-      situationWritten = true;
-
-    } else if ((shift === "Afternoon" || shift === "Evening" || shift === "Night") && sitDocs.length > 0) {
-      const patch = sitAccum(sitDocs[0]);
-      if (shift === "Night") patch.done = false; // manager sets done:true after reviewing
-      await apiFetch(`/situation/${sitDocs[0].$id}`, {
-        method:  "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(patch),
-      });
-      situationWritten = true;
-    }
-
-    if (!situationWritten) {
-      toast(`No situation record found for ${logDate}. Submit Morning shift first.`, "error");
-      return;
-    }
-
-    // Write daily-report index (no per-pump fields — those are in nozzle-readings)
-    const shiftKey = `${email}_${logDate}_${shift}`;
-    let indexDocId = null;
-    try {
-      const indexRes = await apiFetch("/daily-reports", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
-          companyId, stationId, email,
-          employeeName:   employee,
-          shift, logDate, shiftKey,
-          pmsPrice, agoPrice,
-          totalPms, totalAgo, totalVente,
-          venteLitresPms, venteLitresAgo,
-        }),
-      });
-      const indexDoc = await indexRes.json();
-      indexDocId = indexDoc.dailyReport.$id;
-
-      await apiFetch("/payments", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
-          companyId, stationId,
+        nozzleReadings: activeEntries,
+        payments: {
           momo, momoLoss, totalFiche, bon,
           listBC, listSFC, bankCard, spFuelCard,
           cash5000, cash2000, cash1000, cash500,
-          totalCash, totalPayments, gainPayments,
-          email, logDate, shift,
-          employeeName: employee,
-          totalLoans, totalVente,
-          shiftKey,
-        }),
-      });
-    } catch (writeErr) {
-      if (indexDocId) {
-        try { await apiFetch(`/daily-reports/${indexDocId}`, { method: "DELETE" }); } catch {}
-      }
-      throw writeErr;
-    }
+          totalCash, totalPayments, totalLoans,
+        },
+        totals: {
+          venteLitresPms, totalPms,
+          venteLitresAgo, totalAgo,
+          totalVente, pmsPrice, agoPrice,
+        },
+        fiche: fiche.map(i => ({
+          plate: i.plate, amount: i.amount,
+          customerId: i.customerId || "", customerName: i.company || "",
+        })),
+        loans: loans.map(i => ({
+          plate: i.plate, amount: i.amount,
+          customerId: i.customerId || "", customerName: i.company || "",
+        })),
+      }),
+    });
 
-    // Write fiche entries
-    const newFiche = fiche.map(item => ({
-      companyId,    stationId,
-      email,        employeeName: employee,
-      shift,        logDate,
-      shiftKey,
-      plate:        item.plate,
-      amount:       item.amount,
-      customerId:   item.customerId  || "",
-      customerName: item.company,
-    }));
-    if (newFiche.length) {
-      await apiFetch("/fiche", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(newFiche),
-      });
-    }
-
-    // Write loan entries
-    const enrichedLoans = loans.map(item => ({
-      companyId,    stationId,
-      email,        employeeName: employee,
-      shift,        logDate,      monthYear,
-      shiftKey,
-      plate:        item.plate,
-      amount:       item.amount,
-      customerId:   item.customerId  || "",
-      customerName: item.company,
-    }));
-    if (enrichedLoans.length) {
-      await apiFetch("/loans", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(enrichedLoans),
-      });
+    const data = await res.json();
+    if (!res.ok) {
+      toast(data.error || "Failed to save shift.", "error");
+      return;
     }
 
     toast("Report saved successfully ✓", "success");

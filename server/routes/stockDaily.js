@@ -66,13 +66,18 @@ router.get('/me', verifyJWT, requireRole(['owner','manager']), async (req, res) 
  */
 router.get('/', verifyJWT, requireRole(['owner','manager']), async (req, res) => {
   try {
-    const { limit = 100, offset = 0, logdate } = req.query;
+    const { limit = 100, offset = 0, station } = req.query;
     const queries = [
       Query.orderDesc('logDate'),
       Query.limit(Number(limit)),
       Query.offset(Number(offset)),
     ];
-    if (req.user.stationId) queries.push(Query.equal('stationId', req.user.stationId));
+    if (req.user.role !== 'owner') {
+      queries.push(Query.equal('stationId', req.user.stationId));
+    } else {
+      if (station) queries.push(Query.equal('stationId', station));
+      if (req.user.companyId) queries.push(Query.equal('companyId', req.user.companyId));
+    }
     const { documents, total } = await db.listDocuments(DATABASE_ID, COLLECTION_STOCK_DAILY_ID, queries);
     res.json({ stockDaily: documents, total });
   } catch (error) {

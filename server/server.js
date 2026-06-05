@@ -64,6 +64,7 @@ app.use('/api/nozzles',           require('./routes/nozzles'));
 app.use('/api/nozzle-readings',   require('./routes/nozzleReadings'));
 app.use('/api/teams',             require('./routes/authAppwrite/teams'));
 app.use('/api/accounts',          accountsLimiter, require('./routes/authAppwrite/accounts'));
+app.use('/api/shift-submit',       require('./routes/shiftSubmit'));
 app.use('/api/bonuses',           require('./routes/bonuses'));
 app.use('/api/devices',           require('./routes/devices'));
 
