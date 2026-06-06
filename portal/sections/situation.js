@@ -211,7 +211,7 @@
         : hasReadings && hasStock
         ? { text: "Not Complete", bg: "#fef3c7",       color: "#b45309"    }
         : hasReadings
-        ? { text: "Shifts Done",  bg: "#fff7ed",       color: "#ea580c"    }
+        ? { text: "In Progress",  bg: "#fff7ed",       color: "#ea580c"    }
         : { text: "Pending",      bg: "#f1f5f9",       color: "#64748b"    };
 
       const pill = document.getElementById("donePill");

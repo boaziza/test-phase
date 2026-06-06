@@ -67,11 +67,11 @@
     try {
       const dataAgo = { initialStock: initialAgo, receivedLitres: receivedAgo, venteLitres: venteLitresAgo,
         physicalStock: physicalStockAgo, theoryStock: theoryStockAgo, gainFuel: gainFuelAgo,
-        employeeName: name, stockKey: stockKeyAgo, fuelType: "AGO",
+        stockKey: stockKeyAgo, fuelType: "AGO",
         logDate, companyId, stationId, email, situationKey };
       const dataPms = { initialStock: initialPms, receivedLitres: receivedPms, venteLitres: venteLitresPms,
         physicalStock: physicalStockPms, theoryStock: theoryStockPms, gainFuel: gainFuelPms,
-        employeeName: name, stockKey: stockKeyPms, fuelType: "PMS",
+        stockKey: stockKeyPms, fuelType: "PMS",
         logDate, companyId, stationId, email, situationKey };
 
       const response = await apiFetch(`/stock/me?monthYear=${monthYear}`).then(r => r.json());

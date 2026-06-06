@@ -201,8 +201,9 @@
         }
       }));
 
-      const paymentDoc = payDocs[0] || null;
-      _docs = docsWithReadings.map(doc => ({ ...doc, paymentData: paymentDoc }));
+      const payMap = {};
+      payDocs.forEach(p => { payMap[p.shiftKey] = p; });
+      _docs = docsWithReadings.map(doc => ({ ...doc, paymentData: payMap[doc.shiftKey] || null }));
       _page = 1;
       setSidebarList(_docs, false);
       displayPage(_page);
