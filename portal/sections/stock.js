@@ -64,6 +64,18 @@
     const monthYear = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const stockKeyMonthly = `${stationId}_${monthYear}`;
 
+    const created = [];
+    const patched = [];
+
+    async function rollbackStock() {
+      for (const { url, id, snapshot } of [...patched].reverse()) {
+        try { await apiFetch(`${url}/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(snapshot) }); } catch {}
+      }
+      for (const { url, id } of [...created].reverse()) {
+        try { await apiFetch(`${url}/${id}`, { method: "DELETE" }); } catch {}
+      }
+    }
+
     try {
       const dataAgo = { initialStock: initialAgo, receivedLitres: receivedAgo, venteLitres: venteLitresAgo,
         physicalStock: physicalStockAgo, theoryStock: theoryStockAgo, gainFuel: gainFuelAgo,
@@ -82,35 +94,50 @@
 
       if (response.stock?.documents.length > 0) {
         const sd = response.stock.documents[0];
+        patched.push({ url: "/stock", id: sd.$id, snapshot: {
+          totalGainFuelPms:    sd.totalGainFuelPms,
+          totalGainFuelAgo:    sd.totalGainFuelAgo,
+          totalReceivedPms:    sd.totalReceivedPms,
+          totalReceivedAgo:    sd.totalReceivedAgo,
+          totalVenteLitresPms: sd.totalVenteLitresPms,
+          totalVenteLitresAgo: sd.totalVenteLitresAgo,
+        }});
         totalGainFuelPms    += sd.totalGainFuelPms;    totalGainFuelAgo    += sd.totalGainFuelAgo;
         totalReceivedPms    += sd.totalReceivedPms;    totalReceivedAgo    += sd.totalReceivedAgo;
         totalVenteLitresPms += sd.totalVenteLitresPms; totalVenteLitresAgo += sd.totalVenteLitresAgo;
-        await apiFetch(`/stock/${sd.$id}`, {
+        const rMonthly = await apiFetch(`/stock/${sd.$id}`, {
           method: "PATCH", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ totalGainFuelPms, totalGainFuelAgo, totalReceivedPms,
             totalReceivedAgo, totalVenteLitresPms, totalVenteLitresAgo }),
         });
+        if (!rMonthly.ok) { const e = await rMonthly.json(); throw new Error("Monthly stock: " + e.error); }
       } else {
-        await apiFetch(`/stock`, {
+        const rMonthly = await apiFetch(`/stock`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stockKey: stockKeyMonthly, companyId, stationId,
+          body: JSON.stringify({ companyId, stationId,
             totalGainFuelPms, totalGainFuelAgo, totalReceivedPms,
             totalReceivedAgo, totalVenteLitresPms, totalVenteLitresAgo, monthYear }),
         });
+        if (!rMonthly.ok) { const e = await rMonthly.json(); throw new Error("Monthly stock: " + e.error); }
+        const mDoc = await rMonthly.json();
+        created.push({ url: "/stock", id: mDoc.stock?.$id || mDoc.$id });
       }
 
       const resAgo = await apiFetch(`/stock-daily`, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dataAgo) });
-      if (!resAgo.ok) { const e = await resAgo.json(); throw new Error("AGO: " + e.error); }
+      if (!resAgo.ok) { const e = await resAgo.json(); await rollbackStock(); throw new Error("AGO: " + e.error); }
+      const agoDoc = await resAgo.json();
+      created.push({ url: "/stock-daily", id: agoDoc.stock?.$id || agoDoc.$id });
 
       const resPms2 = await apiFetch(`/stock-daily`, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dataPms) });
-      if (!resPms2.ok) { const e = await resPms2.json(); throw new Error("PMS: " + e.error); }
+      if (!resPms2.ok) { const e = await resPms2.json(); await rollbackStock(); throw new Error("PMS: " + e.error); }
 
       toast("Stock saved successfully", "success");
       document.querySelectorAll(".output").forEach(el => { el.textContent = "0"; });
       document.getElementById("stockForm")?.reset();
     } catch (err) {
+      await rollbackStock();
       toast("Error saving stock: " + err.message, "error");
     }
   }
