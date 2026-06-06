@@ -93,7 +93,7 @@
       } else {
         await apiFetch(`/stock`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stockKey: stockKeyMonthly, companyId, stationId,
+          body: JSON.stringify({ companyId, stationId,
             totalGainFuelPms, totalGainFuelAgo, totalReceivedPms,
             totalReceivedAgo, totalVenteLitresPms, totalVenteLitresAgo, monthYear }),
         });
