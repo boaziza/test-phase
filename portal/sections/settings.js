@@ -66,13 +66,26 @@
 
     const formattedDate = new Date().toLocaleDateString('en-CA');
 
+    const created = []; // new fuel-price docs → DELETE on rollback
+    const patched = []; // patched docs → restore on rollback
+
+    async function rollbackFuel() {
+      for (const { id } of [...created].reverse()) {
+        try { await apiFetch(`/fuel-prices/${id}`, { method: "DELETE" }); } catch {}
+      }
+      for (const { url, id, snapshot } of [...patched].reverse()) {
+        try { await apiFetch(`${url}/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(snapshot) }); } catch {}
+      }
+    }
+
     try {
-      await Promise.all(stations.map(async (station) => {
-        await apiFetch(`/stations/${station.$id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+      for (const station of stations) {
+        const r = await apiFetch(`/stations/${station.$id}`, {
+          method: "PATCH", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ momoFee: momoFeePercent }),
         });
+        if (!r.ok) { const e = await r.json(); throw new Error(`Station ${station.name}: ${e.error}`); }
+        patched.push({ url: "/stations", id: station.$id, snapshot: { momoFee: station.momoFee ?? 0 } });
 
         const fuelPrices = await apiFetch(`/fuel-prices?station=${station.$id}`).then(r => r.json());
         const priceDocs  = fuelPrices.fuelPriceHistory ?? [];
@@ -81,30 +94,45 @@
         const agoPriceDoc = sorted.find(p => p.fuelType === "AGO");
 
         if (!pmsPriceDoc || pmsPriceDoc.price !== pmsPrice) {
-          if (pmsPriceDoc) await apiFetch(`/fuel-prices/${pmsPriceDoc.$id}`, {
-            method: "PATCH", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ effectiveTo: formattedDate }),
-          });
-          await apiFetch(`/fuel-prices`, {
+          if (pmsPriceDoc) {
+            const rp = await apiFetch(`/fuel-prices/${pmsPriceDoc.$id}`, {
+              method: "PATCH", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ effectiveTo: formattedDate }),
+            });
+            if (!rp.ok) { const e = await rp.json(); throw new Error(`PMS price: ${e.error}`); }
+            patched.push({ url: "/fuel-prices", id: pmsPriceDoc.$id, snapshot: { effectiveTo: pmsPriceDoc.effectiveTo ?? null } });
+          }
+          const rn = await apiFetch(`/fuel-prices`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ stationId: station.$id, effectiveFrom: formattedDate, fuelType: "PMS", price: pmsPrice, setByUserId: userId }),
           });
+          if (!rn.ok) { const e = await rn.json(); throw new Error(`New PMS price: ${e.error}`); }
+          const rnd = await rn.json();
+          created.push({ id: rnd.fuelPrice?.$id || rnd.$id });
         }
 
         if (!agoPriceDoc || agoPriceDoc.price !== agoPrice) {
-          if (agoPriceDoc) await apiFetch(`/fuel-prices/${agoPriceDoc.$id}`, {
-            method: "PATCH", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ effectiveTo: formattedDate }),
-          });
-          await apiFetch(`/fuel-prices`, {
+          if (agoPriceDoc) {
+            const ra = await apiFetch(`/fuel-prices/${agoPriceDoc.$id}`, {
+              method: "PATCH", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ effectiveTo: formattedDate }),
+            });
+            if (!ra.ok) { const e = await ra.json(); throw new Error(`AGO price: ${e.error}`); }
+            patched.push({ url: "/fuel-prices", id: agoPriceDoc.$id, snapshot: { effectiveTo: agoPriceDoc.effectiveTo ?? null } });
+          }
+          const rna = await apiFetch(`/fuel-prices`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ stationId: station.$id, effectiveFrom: formattedDate, fuelType: "AGO", price: agoPrice, setByUserId: userId }),
           });
+          if (!rna.ok) { const e = await rna.json(); throw new Error(`New AGO price: ${e.error}`); }
+          const rnad = await rna.json();
+          created.push({ id: rnad.fuelPrice?.$id || rnad.$id });
         }
-      }));
+      }
 
       showStatus(statusEl, "✓ Settings saved for all stations.", "success");
     } catch (err) {
+      await rollbackFuel();
       showStatus(statusEl, "Error saving settings: " + err.message, "error");
     }
   }

@@ -42,23 +42,28 @@ router.post('/', verifyJWT, requireRole(['owner', 'manager']), async (req, res) 
     // 1. Create the Appwrite account
     const account = await users.create(ID.unique(), email, undefined, password, name);
 
-    // 2. Set prefs so verifyJWT uses fast path
-    await users.updatePrefs(account.$id, { role, companyId, stationId: stationId || '' });
+    try {
+      // 2. Set prefs so verifyJWT uses fast path
+      await users.updatePrefs(account.$id, { role, companyId, stationId: stationId || '' });
 
-    // 3. Create the users-collection document
-    const doc = await db.createDocument(DB_ID, USERS_ID, ID.unique(), {
-      userId:              account.$id,
-      name,
-      email,
-      role,
-      companyId,
-      stationId:           stationId || null,
-      createdBy:           req.user.$id,
-      mustChangePassword:  true,   // force password change on first login
-      active:              true,
-    });
+      // 3. Create the users-collection document
+      const doc = await db.createDocument(DB_ID, USERS_ID, ID.unique(), {
+        userId:              account.$id,
+        name,
+        email,
+        role,
+        companyId,
+        stationId:           stationId || null,
+        createdBy:           req.user.$id,
+        mustChangePassword:  true,
+        active:              true,
+      });
 
-    res.json({ success: true, account: { $id: account.$id, name, email }, user: doc });
+      res.json({ success: true, account: { $id: account.$id, name, email }, user: doc });
+    } catch (err) {
+      try { await users.delete(account.$id); } catch {}
+      res.status(500).json({ error: err.message });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -106,15 +111,17 @@ router.patch('/:userId/password', verifyJWT, requireRole(['owner']), async (req,
     }
     await users.updatePassword(req.params.userId, password);
 
-    // Mark mustChangePassword on the users-collection doc so the UI prompts them
-    const existing = await db.listDocuments(DB_ID, USERS_ID, [
-      Query.equal('userId', req.params.userId),
-    ]);
-    if (existing.documents.length > 0) {
-      await db.updateDocument(DB_ID, USERS_ID, existing.documents[0].$id, {
-        mustChangePassword: true,
-      });
-    }
+    // Mark mustChangePassword — best-effort, password reset already succeeded
+    try {
+      const existing = await db.listDocuments(DB_ID, USERS_ID, [
+        Query.equal('userId', req.params.userId),
+      ]);
+      if (existing.documents.length > 0) {
+        await db.updateDocument(DB_ID, USERS_ID, existing.documents[0].$id, {
+          mustChangePassword: true,
+        });
+      }
+    } catch {}
 
     res.json({ success: true });
   } catch (err) {
@@ -147,14 +154,16 @@ router.delete('/:userId', verifyJWT, requireRole(['owner', 'manager']), async (r
   try {
     const { userId } = req.params;
 
-    // Delete users-collection document
     const lookup = await db.listDocuments(DB_ID, USERS_ID, [Query.equal('userId', userId), Query.limit(1)]);
-    if (lookup.documents.length > 0) {
-      await db.deleteDocument(DB_ID, USERS_ID, lookup.documents[0].$id);
-    }
+    const dbDoc  = lookup.documents[0] ?? null;
 
-    // Delete the Appwrite account
+    // Delete Appwrite account first — if this fails nothing is lost
     await users.delete(userId);
+
+    // Delete DB doc — if this fails the auth account is already gone (orphaned record, harmless)
+    if (dbDoc) {
+      try { await db.deleteDocument(DB_ID, USERS_ID, dbDoc.$id); } catch {}
+    }
 
     res.json({ success: true });
   } catch (err) {

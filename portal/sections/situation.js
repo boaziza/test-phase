@@ -530,7 +530,15 @@
     const nozzleRows = tbody ? [...tbody.querySelectorAll("tr[data-nozzle-id]")] : [];
     const totals   = {};
 
-    const readingPromises = nozzleRows.map(row => {
+    const createdReadingIds = [];
+
+    async function rollbackReadings() {
+      for (const id of [...createdReadingIds].reverse()) {
+        try { await apiFetch(`/nozzle-readings/${id}`, { method: "DELETE" }); } catch {}
+      }
+    }
+
+    const readingPromises = nozzleRows.map(async row => {
       const nozzleId     = row.dataset.nozzleId;
       const fuelType     = row.dataset.fuelType;
       const pumpId       = row.dataset.pumpId       || "";
@@ -543,7 +551,7 @@
       if (!totals[fuelType]) totals[fuelType] = 0;
       totals[fuelType] += venteLitres;
 
-      return apiFetch("/nozzle-readings", {
+      const r = await apiFetch("/nozzle-readings", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({
@@ -556,6 +564,10 @@
           employeeName: state.profile?.name   || "",
         }),
       });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.error || "Nozzle reading failed"); }
+      const doc = await r.json();
+      const id = doc.$id || doc.reading?.$id;
+      if (id) createdReadingIds.push(id);
     });
 
     try {
@@ -592,7 +604,7 @@
         }),
       });
 
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error || "Save failed"); }
+      if (!res.ok) { const e = await res.json(); await rollbackReadings(); throw new Error(e.error || "Save failed"); }
 
       delete monthCache[activeDate.substring(0, 7)];
       _isEditing = false;
@@ -600,6 +612,7 @@
       await loadSituationDate(activeDate);
       toast("Situation updated.", "success");
     } catch (err) {
+      await rollbackReadings();
       toast("Save failed: " + err.message, "error");
       btn.disabled = false;
     }

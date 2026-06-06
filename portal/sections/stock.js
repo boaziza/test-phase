@@ -80,11 +80,11 @@
       const dataAgo = { initialStock: initialAgo, receivedLitres: receivedAgo, venteLitres: venteLitresAgo,
         physicalStock: physicalStockAgo, theoryStock: theoryStockAgo, gainFuel: gainFuelAgo,
         stockKey: stockKeyAgo, fuelType: "AGO",
-        logDate, companyId, stationId, email, situationKey };
+        logDate, monthYear, companyId, stationId, email, situationKey };
       const dataPms = { initialStock: initialPms, receivedLitres: receivedPms, venteLitres: venteLitresPms,
         physicalStock: physicalStockPms, theoryStock: theoryStockPms, gainFuel: gainFuelPms,
         stockKey: stockKeyPms, fuelType: "PMS",
-        logDate, companyId, stationId, email, situationKey };
+        logDate, monthYear, companyId, stationId, email, situationKey };
 
       const response = await apiFetch(`/stock/me?monthYear=${monthYear}`).then(r => r.json());
 
@@ -114,7 +114,7 @@
       } else {
         const rMonthly = await apiFetch(`/stock`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ companyId, stationId,
+          body: JSON.stringify({ stockKey: stockKeyMonthly, companyId, stationId,
             totalGainFuelPms, totalGainFuelAgo, totalReceivedPms,
             totalReceivedAgo, totalVenteLitresPms, totalVenteLitresAgo, monthYear }),
         });
@@ -456,6 +456,27 @@
     const theoryAgo = Math.round(initAgo + recvAgo - venteAgo);
     const gainAgo   = Math.round(physAgo - theoryAgo);
 
+    // Snapshot both docs before writing so either can be restored on partial failure
+    const snapPms = {
+      initialStock: Number(_histActivDoc.initialPms), receivedLitres: Number(_histActivDoc.receivedPms),
+      physicalStock: Number(_histActivDoc.physicalStockPms), theoryStock: Number(_histActivDoc.theoryStockPms),
+      gainFuel: Number(_histActivDoc.gainFuelPms),
+    };
+    const snapAgo = {
+      initialStock: Number(_histActivDoc.initialAgo), receivedLitres: Number(_histActivDoc.receivedAgo),
+      physicalStock: Number(_histActivDoc.physicalStockAgo), theoryStock: Number(_histActivDoc.theoryStockAgo),
+      gainFuel: Number(_histActivDoc.gainFuelAgo),
+    };
+
+    async function rollbackHistEdit(pmsOk, agoOk) {
+      if (pmsOk) {
+        try { await apiFetch(`/stock-daily/${_histActivDoc.pmsDocId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(snapPms) }); } catch {}
+      }
+      if (agoOk) {
+        try { await apiFetch(`/stock-daily/${_histActivDoc.agoDocId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(snapAgo) }); } catch {}
+      }
+    }
+
     try {
       const [resPms, resAgo] = await Promise.all([
         apiFetch(`/stock-daily/${_histActivDoc.pmsDocId}`, {
@@ -472,8 +493,12 @@
         }),
       ]);
 
-      if (!resPms.ok) { const e = await resPms.json(); throw new Error("PMS: " + (e.error || "failed")); }
-      if (!resAgo.ok) { const e = await resAgo.json(); throw new Error("AGO: " + (e.error || "failed")); }
+      const pmsOk = resPms.ok, agoOk = resAgo.ok;
+      if (!pmsOk || !agoOk) {
+        await rollbackHistEdit(pmsOk, agoOk);
+        const e = !pmsOk ? await resPms.json() : await resAgo.json();
+        throw new Error((!pmsOk ? "PMS" : "AGO") + ": " + (e.error || "failed"));
+      }
 
       // Update _stockDocs cache so list + calendar reflect new values
       const idx = _stockDocs.findIndex(d => String(d.logDate || "").substring(0, 10) === _selectedDate);
