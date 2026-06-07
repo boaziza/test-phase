@@ -52,7 +52,8 @@
 
   async function storeStock() {
     const { toast, apiFetch, state } = window._dash;
-    const { companyId, stationId, name, email } = state.profile;
+    const { companyId, name, email } = state.profile;
+    const stationId = state.viewingStation?.$id || state.profile.stationId;
     const situationKey    = `${stationId}_${logDate}`;
     const stockKeyPms     = `${stationId}_PMS_${logDate}`;
     const stockKeyAgo     = `${stationId}_AGO_${logDate}`;

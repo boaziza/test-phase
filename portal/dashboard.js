@@ -35,6 +35,11 @@
   let _editUserId     = null;
   let _resetPwdUserId = null;
 
+  // Company-wide pompistes list, stashed while an owner is in station-view
+  // mode so it can be restored on exit (the cached list gets temporarily
+  // replaced with the viewed station's scoped list — see enter/exitStationView).
+  let _companyWidePompistes = null;
+
   // ── ROLE VISIBILITY ────────────────────────────────────────────
   function applyRoleVisibility(role) {
     document.querySelectorAll("[data-roles]").forEach(el => {
@@ -115,7 +120,7 @@
     const password  = document.getElementById("newUserPassword").value.trim();
     const stationId = _addingRole === "manager"
       ? document.getElementById("newUserStation").value
-      : _state.profile.stationId;
+      : (_state.viewingStation?.$id || _state.profile.stationId);
 
     if (!name || !email || !password) { toast("All fields are required.", "warning"); return; }
     if (password.length < 8)          { toast("Password must be at least 8 characters.", "warning"); return; }
@@ -152,18 +157,20 @@
   let _editingManagerStation = false;
 
   function openEditUser(userId) {
-    const isOwner = _state.role === "owner" || _state.viewingStation;
-    const list    = isOwner ? _state.managers : _state.pompistes;
-    const user    = list.find(u => u.userId === userId);
+    // Only a genuine (non-masquerading) owner edits from the Managers list —
+    // an owner in station-view reaches this from the Pompistes tab instead.
+    const editingManager = _state.role === "owner" && !_state.viewingStation;
+    const list = editingManager ? _state.managers : _state.pompistes;
+    const user = list.find(u => u.userId === userId);
     if (!user) return;
     _editUserId = userId;
-    _editingManagerStation = isOwner;
+    _editingManagerStation = editingManager;
     document.getElementById("editUserName").value = user.name || "";
 
     const stationRow = document.getElementById("editStationRow");
     if (stationRow) {
-      stationRow.style.display = isOwner ? "" : "none";
-      if (isOwner) {
+      stationRow.style.display = editingManager ? "" : "none";
+      if (editingManager) {
         const sel = document.getElementById("editUserStation");
         if (sel) {
           sel.innerHTML = _state.stations.map(s =>
@@ -263,19 +270,36 @@
   });
 
   // ── STATION VIEW MODE ──────────────────────────────────────────
-  function enterStationView(station) {
+  async function enterStationView(station) {
     _state.viewingStation = station;
+    _state.station = station;
     applyRoleVisibility("manager");
     const banner = document.getElementById("stationViewBanner");
     const label  = document.getElementById("stationViewName");
     if (banner) banner.style.display = "flex";
     if (label)  label.textContent    = station.name;
+
+    // Swap the company-wide pompiste list for one scoped to this station so
+    // stat cards (e.g. overview) reflect the viewed station, not the company.
+    _companyWidePompistes = _state.pompistes;
+    try {
+      const r = await apiFetch(`/users?station=${station.$id}`).then(r => r.json());
+      _state.pompistes = (r.users || []).filter(u => u.role === "pompiste");
+    } catch {
+      _state.pompistes = [];
+    }
+
     showSection("overview");
     callLoader("overview");
   }
 
   function exitStationView() {
     _state.viewingStation = null;
+    _state.station = null;
+    if (_companyWidePompistes) {
+      _state.pompistes = _companyWidePompistes;
+      _companyWidePompistes = null;
+    }
     applyRoleVisibility("owner");
     const banner = document.getElementById("stationViewBanner");
     if (banner) banner.style.display = "none";

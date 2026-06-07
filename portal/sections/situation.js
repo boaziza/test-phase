@@ -17,7 +17,7 @@
 
   async function _getNozzles() {
     if (_nozzleCache) return _nozzleCache;
-    const stationId = state.profile?.stationId;
+    const stationId = state.viewingStation?.$id || state.profile?.stationId;
     if (!stationId) return [];
 
     const [nozzlesRes, pumpsRes] = await Promise.all([
@@ -135,7 +135,7 @@
     _setEditBtn(false);
 
     try {
-      const stationId = state.profile?.stationId;
+      const stationId = state.viewingStation?.$id || state.profile?.stationId;
       const [y, m] = date.split("-");
 
       const [sitRes, stockRes, pmsRes, agoRes, nozzles, readingsRes] = await Promise.all([
@@ -436,7 +436,7 @@
     if (!_activeSitDoc || _isEditing) return;
     _isEditing = true;
 
-    const stationId = state.profile?.stationId;
+    const stationId = state.viewingStation?.$id || state.profile?.stationId;
     const [nozzles, readingsRes] = await Promise.all([
       _getNozzles(),
       stationId
@@ -510,7 +510,7 @@
     if (!_activeSitDoc || !_isEditing) return;
     const { toast } = window._dash;
 
-    const stationId = state.profile?.stationId || "";
+    const stationId = state.viewingStation?.$id || state.profile?.stationId || "";
     const companyId = state.company?.$id       || "";
     const shift     = _activeSitDoc.shift      || "Morning";
 
