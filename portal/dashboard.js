@@ -368,6 +368,7 @@
         _state.pompistes = users.filter(u => u.role === "pompiste");
       }
       document.getElementById("userContext").textContent = _state.company?.name || "—";
+      if (_state.company?.name) document.title = `${_state.company.name} — Rapport Pompiste`;
     } else {
       const [stRes, pmpRes] = await Promise.all([
         apiFetch("/stations"),
@@ -376,6 +377,7 @@
       if (stRes.ok)  { const d = await stRes.json();  _state.station   = (d.stations || []).find(s => s.$id === _state.profile.stationId) || null; }
       if (pmpRes.ok) { const d = await pmpRes.json(); _state.pompistes = (d.users || []).filter(u => u.role === "pompiste"); }
       document.getElementById("userContext").textContent = _state.station?.name || "No station assigned";
+      if (_state.station?.name) document.title = `${_state.station.name} — Rapport Pompiste`;
     }
 
     callLoader(start);

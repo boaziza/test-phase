@@ -18,11 +18,18 @@ router.post('/', verifyJWT, requireRole(['owner','manager','pompiste']), async (
      return res.status(400).json({ error: "Stock body is required." });
     }
 
+    // Trust the authenticated user's identity, not whatever the client sent
+    const payload = {
+      ...body,
+      stationId: req.user.role === 'owner' ? (body.stationId || req.user.stationId) : req.user.stationId,
+      companyId: req.user.companyId,
+    };
+
     const newStock = await db.createDocument(
       DATABASE_ID,
       COLLECTION_STOCK_ID,
       ID.unique(),
-      body
+      payload
     );
 
     res.json({ message: "Stock created successfully", stock: newStock });

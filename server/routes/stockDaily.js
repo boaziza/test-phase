@@ -54,14 +54,10 @@ router.get('/me', verifyJWT, requireRole(['owner','manager']), async (req, res) 
       return res.status(404).json({ error: "No log date or fuel type provided." });
     }
 
-    const stockDaily = await db.listDocuments(
-      DATABASE_ID,
-      COLLECTION_STOCK_DAILY_ID,
-      [
-        Query.equal('logDate', logDate),
-        Query.equal('fuelType', fuelType)
-      ]
-    );
+    const queries = [Query.equal('logDate', logDate), Query.equal('fuelType', fuelType)];
+    if (req.user.stationId) queries.push(Query.equal('stationId', req.user.stationId));
+
+    const stockDaily = await db.listDocuments(DATABASE_ID, COLLECTION_STOCK_DAILY_ID, queries);
     res.json({ stockDaily });
   } catch (error) {
     res.status(500).json({ error: error.message });

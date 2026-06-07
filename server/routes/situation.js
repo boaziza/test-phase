@@ -20,11 +20,18 @@ router.post('/', verifyJWT, requireDevice, requireRole(['owner','manager','pompi
         return res.status(400).json({ error: "Situation body is required." });
     }
 
+    // Trust the authenticated user's identity, not whatever the client sent
+    const payload = {
+      ...body,
+      stationId: req.user.role === 'owner' ? (body.stationId || req.user.stationId) : req.user.stationId,
+      companyId: req.user.companyId,
+    };
+
     const newSituation = await db.createDocument(
       DATABASE_ID,
       COLLECTION_SITUATION_ID,
       ID.unique(),
-      body
+      payload
     );
 
     res.json({ message: "Situation created successfully", situation: newSituation });
