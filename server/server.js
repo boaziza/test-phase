@@ -70,5 +70,15 @@ app.use('/api/devices',           require('./routes/devices'));
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 
+// ── Central error handler — catches anything passed to next(err) ─────
+// (Routes mostly catch their own errors and respond directly; this is the
+// backstop for anything that slips through, e.g. malformed JSON bodies,
+// CORS rejections, or a route that forgets its try/catch.)
+app.use((err, req, res, _next) => {
+  console.error(`[${req.method} ${req.originalUrl}]`, err.message);
+  if (res.headersSent) return;
+  res.status(err.status || 500).json({ error: err.message || 'Internal server error.' });
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

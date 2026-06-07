@@ -40,13 +40,15 @@ router.post('/', verifyJWT, requireDevice, requireRole(['owner','manager','pompi
  */
 router.get('/me', verifyJWT, requireRole(['owner','manager','pompiste']), async (req, res) => {
   try {
-    const email = req.query.email;
+    // Pompistes can only ever look up their own reports — owners/managers are
+    // allowed to look up a specific employee's reports (used by emp-report),
+    // and remain scoped to their station via the stationId filter below.
+    const email = req.user.role === 'pompiste' ? req.user.email : (req.query.email || req.user.email);
     const logDate = req.query.logDate;
     const shift = req.query.shift;
-    
 
-    if (!email && !logDate && !shift) {
-      return res.status(404).json({ error: "No email or log date provided." });
+    if (!logDate && !shift) {
+      return res.status(400).json({ error: "No log date or shift provided." });
     }
 
     const queries = [];

@@ -94,7 +94,7 @@ router.patch('/:id', verifyJWT, requireRole(['owner','manager','pompiste']), asy
     const id = req.params.id;
     const body = req.body;
 
-    if (!body && !id) {
+    if (!id || !body || Object.keys(body).length === 0) {
       return res.status(400).json({ error: "Situation body and id is required." });
     }
 
@@ -104,14 +104,14 @@ router.patch('/:id', verifyJWT, requireRole(['owner','manager','pompiste']), asy
       Object.entries(body).filter(([k]) => !LEGACY_FIELDS.includes(k))
     );
 
-    const updatededSituation = await db.updateDocument(
+    const updatedSituation = await db.updateDocument(
       DATABASE_ID,
       COLLECTION_SITUATION_ID,
       id,
       cleanBody
     );
 
-    res.json({ message: "Situation updated successfully", situation: updatededSituation });
+    res.json({ message: "Situation updated successfully", situation: updatedSituation });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
