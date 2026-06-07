@@ -28,7 +28,7 @@ async function rollback(created, patched) {
 router.post('/', verifyJWT, requireDevice, requireRole(['pompiste']), async (req, res) => {
   const {
     shift, logDate, monthYear,
-    email, employeeName, companyId, stationId, userId,
+    employeeName,
     nozzleReadings = [],
     gainPayments   = 0,
     payments       = {},
@@ -37,11 +37,20 @@ router.post('/', verifyJWT, requireDevice, requireRole(['pompiste']), async (req
     loans          = [],
   } = req.body;
 
+  // Trust the authenticated session, not whatever the client claims to be
+  const email     = req.user.email;
+  const companyId = req.user.companyId;
+  const stationId = req.user.stationId;
+  const userId    = req.user.$id;
+
   // ── Validate ─────────────────────────────────────────────────────────────
-  const missing = ['shift','logDate','monthYear','email','stationId']
+  const missing = ['shift','logDate','monthYear']
     .filter(k => !req.body[k]);
   if (missing.length) {
     return res.status(400).json({ error: `Missing fields: ${missing.join(', ')}` });
+  }
+  if (!stationId) {
+    return res.status(400).json({ error: 'No station assigned to this account.' });
   }
 
   const VALID_SHIFTS = ['Morning','Afternoon','Evening','Night'];

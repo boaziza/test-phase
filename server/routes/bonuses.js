@@ -1,7 +1,6 @@
 const express  = require('express');
 const router    = express.Router();
 const multer    = require('multer');
-const XLSX      = require('xlsx');
 const ExcelJS   = require('exceljs');
 const { verifyJWT, requireRole } = require('../middleware/auth');
 
@@ -17,9 +16,24 @@ router.post('/filter', verifyJWT, requireRole(['owner', 'manager']), upload.sing
     if (!req.file) return res.status(400).json({ error: 'No file uploaded. Send an xlsx file in the "file" field.' });
 
     // 1. Read uploaded Excel (header on row 2)
-    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-    const sheet    = workbook.Sheets[workbook.SheetNames[0]];
-    const rows     = XLSX.utils.sheet_to_json(sheet, { defval: '', range: 1 });
+    const inputWb = new ExcelJS.Workbook();
+    await inputWb.xlsx.load(req.file.buffer);
+    const sheet = inputWb.worksheets[0];
+
+    const headerRow = sheet.getRow(2);
+    const headers   = [];
+    headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => { headers[colNumber] = cell.value; });
+
+    const rows = [];
+    sheet.eachRow((row, rowNumber) => {
+      if (rowNumber <= 2) return; // skip title row + header row
+      const obj = {};
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        const key = headers[colNumber];
+        if (key != null) obj[key] = cell.value ?? '';
+      });
+      rows.push(obj);
+    });
 
     // 2. Filter rows
     const filtered = rows.filter(r => {

@@ -11,7 +11,7 @@ const DATABASE_ID = process.env.APPWRITE_DATABASE_ID;
  * Creates a new user.
  */
 
-router.post('/', verifyJWT, requireRole(['owner','manager','pompiste']), async (req, res) => {
+router.post('/', verifyJWT, requireRole(['owner']), async (req, res) => {
   try {
     const body = req.body;
 
@@ -86,7 +86,7 @@ router.get('/', verifyJWT, requireRole(['owner','manager']), async (req, res) =>
  * PATCH /user
  * Updates user information (e.g., name).
  */
-router.patch('/:id', verifyJWT, requireRole(['owner','manager','pompiste']), async (req, res) => {
+router.patch('/:id', verifyJWT, requireRole(['owner']), async (req, res) => {
   try {
     const id = req.params.id;
     const body = req.body;

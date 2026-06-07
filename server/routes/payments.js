@@ -44,7 +44,7 @@ router.get('/me', verifyJWT, requireRole(['owner','manager']), async (req, res) 
     const logDate = req.query.logDate;
 
     if (!email && !logDate) {
-      return res.status(404).json({ error: "No email and log date provided." });
+      return res.status(400).json({ error: "No email and log date provided." });
     }
 
     const queries = [Query.equal('email', email), Query.equal('logDate', logDate)];

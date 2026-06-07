@@ -114,10 +114,16 @@ window.requireAuth = async function requireAuth(options = {}) {
       companyId: doc.companyId,
       prefs: user.prefs || {}
     };
-    
+
+    if (allowedRoles.length && !allowedRoles.includes(profile.role)) {
+      const dest = profile.role === 'pompiste' ? window._AW.POMPISTE_URL : window._AW.OWNER_DASHBOARD_URL;
+      window.location.replace(dest);
+      return null;
+    }
+
     // Cache it globally for other scripts to use synchronously
     window._SESSION = { profile };
-    
+
     return profile;
 
   } catch (err) {

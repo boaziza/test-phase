@@ -451,9 +451,9 @@
               </div>
               <div class="hist-cal-section">
                 <div class="hist-cal-nav">
-                  <button onclick="window._stock._calPrev()">&#8249;</button>
+                  <button onclick="window._stock._calPrev()" aria-label="Previous month">&#8249;</button>
                   <span id="histCalMonthLabel"></span>
-                  <button onclick="window._stock._calNext()">&#8250;</button>
+                  <button onclick="window._stock._calNext()" aria-label="Next month">&#8250;</button>
                 </div>
                 <div class="hist-cal-grid" id="histCalGrid"></div>
                 <div class="hist-cal-legend">
@@ -687,7 +687,7 @@
               Drop your Excel file here or click to browse
             </div>
             <div style="font-size:12px;color:#8899aa;margin-top:5px;">Accepts .xlsx only</div>
-            <input type="file" id="bonusFileInput" accept=".xlsx" style="display:none;"
+            <input type="file" id="bonusFileInput" accept=".xlsx" style="display:none;" aria-label="Excel file to filter"
               onchange="window._bon.onFileChange(this)">
           </div>
 
@@ -973,7 +973,7 @@
     <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title">Add Station</h2>
-        <button class="modal-close" data-close="addStationModal">&times;</button>
+        <button class="modal-close" data-close="addStationModal" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <div class="form-row"><label>Station Name *</label><input type="text" id="addStationName" placeholder="e.g. Station Total Kigali"></div>
@@ -992,7 +992,7 @@
     <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title">Edit Station</h2>
-        <button class="modal-close" data-close="editStationModal">&times;</button>
+        <button class="modal-close" data-close="editStationModal" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <div class="form-row"><label>Station Name *</label><input type="text" id="editStationName"></div>
@@ -1011,7 +1011,7 @@
     <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title">Archive Station</h2>
-        <button class="modal-close" data-close="archiveStationModal">&times;</button>
+        <button class="modal-close" data-close="archiveStationModal" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p id="archiveStationMsg">Are you sure you want to archive this station? It will no longer appear in the dashboard.</p>
@@ -1027,7 +1027,7 @@
     <div class="modal">
       <div class="modal-header">
         <h2 id="addUserModalTitle">Add User</h2>
-        <button class="modal-close" data-close="addUserModal">×</button>
+        <button class="modal-close" data-close="addUserModal" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
         <div class="form-row"><label>Full Name</label><input type="text" id="newUserName"></div>
@@ -1047,7 +1047,7 @@
 
   <div class="modal-overlay" id="editUserModal" style="display:none;">
     <div class="modal">
-      <div class="modal-header"><h2>Edit Account</h2><button class="modal-close" data-close="editUserModal">×</button></div>
+      <div class="modal-header"><h2>Edit Account</h2><button class="modal-close" data-close="editUserModal" aria-label="Close">×</button></div>
       <div class="modal-body">
         <div class="form-row"><label>Full Name</label><input type="text" id="editUserName"></div>
         <div class="form-row" id="editStationRow" style="display:none;">
@@ -1064,7 +1064,7 @@
 
   <div class="modal-overlay" id="deleteUserModal" style="display:none;">
     <div class="modal">
-      <div class="modal-header"><h2>Delete Account</h2><button class="modal-close" data-close="deleteUserModal">&times;</button></div>
+      <div class="modal-header"><h2>Delete Account</h2><button class="modal-close" data-close="deleteUserModal" aria-label="Close">&times;</button></div>
       <div class="modal-body">
         <p class="modal-hint" id="deleteUserHint"></p>
       </div>
@@ -1077,7 +1077,7 @@
 
   <div class="modal-overlay" id="resetPwdModal" style="display:none;">
     <div class="modal">
-      <div class="modal-header"><h2>Reset Password</h2><button class="modal-close" data-close="resetPwdModal">×</button></div>
+      <div class="modal-header"><h2>Reset Password</h2><button class="modal-close" data-close="resetPwdModal" aria-label="Close">×</button></div>
       <div class="modal-body">
         <p class="modal-hint" id="resetPwdHint"></p>
         <div class="form-row"><label>New Temporary Password</label><input type="text" id="resetPwdInput" placeholder="Min. 8 characters"></div>
@@ -1103,7 +1103,7 @@
 
   <div class="modal-overlay" id="confirmDeleteModal" style="display:none;">
     <div class="modal modal-sm">
-      <div class="modal-header"><h2>Confirm Delete</h2><button class="modal-close" data-close="confirmDeleteModal">×</button></div>
+      <div class="modal-header"><h2>Confirm Delete</h2><button class="modal-close" data-close="confirmDeleteModal" aria-label="Close">×</button></div>
       <div class="modal-body"><p class="modal-hint" id="confirmDeleteMsg">Are you sure?</p></div>
       <div class="modal-footer">
         <button class="btn-ghost" data-close="confirmDeleteModal">Cancel</button>
@@ -1198,7 +1198,7 @@
     <div class="modal">
       <div class="modal-header">
         <h2>Move to Station</h2>
-        <button class="modal-close" data-close="movePompisteModal">&times;</button>
+        <button class="modal-close" data-close="movePompisteModal" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <p id="movePompisteMsg" style="margin-bottom:12px;font-size:13px;color:var(--rp-muted)"></p>
@@ -1221,7 +1221,7 @@
     <div class="modal">
       <div class="modal-header">
         <h2 id="addPumpModalTitle">Add Pump</h2>
-        <button class="modal-close" data-close="addPumpModal">&times;</button>
+        <button class="modal-close" data-close="addPumpModal" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
@@ -1241,7 +1241,7 @@
     <div class="modal">
       <div class="modal-header">
         <h2>Edit Pump</h2>
-        <button class="modal-close" data-close="editPumpModal">&times;</button>
+        <button class="modal-close" data-close="editPumpModal" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
@@ -1261,7 +1261,7 @@
     <div class="modal">
       <div class="modal-header">
         <h2 id="addNozzleModalTitle">Add Nozzle</h2>
-        <button class="modal-close" data-close="addNozzleModal">&times;</button>
+        <button class="modal-close" data-close="addNozzleModal" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
@@ -1289,7 +1289,7 @@
     <div class="modal">
       <div class="modal-header">
         <h2>Edit Nozzle</h2>
-        <button class="modal-close" data-close="editNozzleModal">&times;</button>
+        <button class="modal-close" data-close="editNozzleModal" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
