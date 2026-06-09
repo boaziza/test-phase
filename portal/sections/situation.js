@@ -688,15 +688,29 @@
       // Strip UTF-8 BOM (U+FEFF) — Excel-exported CSVs always include it; it
       // silently corrupts the first header name making row['date'] return undefined.
       const clean = (text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text).trim();
-      const lines = clean.split(/\r?\n/);
+      const lines = clean.split(/\r?\n/).filter(l => l.trim());
       if (lines.length < 2) return [];
-      const headers = _pos._parseLine(lines[0]).map(h => h.trim().toLowerCase());
-      return lines.slice(1).filter(l => l.trim()).map(l => {
+
+      // AdvaTech exports prefix the real header row with a title row
+      // ("AdvaTech,,,,,,,,"). Find the first line whose fields include "date".
+      let headerIdx = lines.findIndex(l =>
+        _pos._parseLine(l).map(h => h.trim().toLowerCase()).includes('date')
+      );
+      if (headerIdx === -1) headerIdx = 0;
+
+      const headers = _pos._parseLine(lines[headerIdx]).map(h => h.trim().toLowerCase());
+      return lines.slice(headerIdx + 1).map(l => {
         const vals = _pos._parseLine(l);
         const row = {};
         headers.forEach((h, i) => { row[h] = (vals[i] || '').trim(); });
         return row;
       });
+    },
+
+    // Strips thousand-separator commas before Number() — AdvaTech quotes numeric
+    // fields like "193,056" and "2,938" because they contain commas.
+    _num(v) {
+      return Number(String(v || '').replace(/,/g, '')) || 0;
     },
 
     _mapRow(row) {
@@ -715,16 +729,16 @@
                      : (product.includes('DIESEL') || product.includes('GASOIL') || product === 'AGO') ? 'AGO'
                      : 'OTHER';
 
-      const method = (row['payment method'] || row['payment_method'] || '').trim().toUpperCase();
+      const method = (row['payment'] || row['payment method'] || row['payment_method'] || '').trim().toUpperCase();
 
       return {
         date,
         time:       timePart.trim().substring(0, 5),
         fuelType,
-        amount:     Number(row['amount'])  || 0,
-        volume:     Number(row['volume'])  || 0,
+        amount:     _pos._num(row['amount']),
+        volume:     _pos._num(row['volume']),
         method,
-        customerId: row['customer id'] || row['customer_id'] || '',
+        customerId: row['customer'] || row['customer id'] || row['customer_id'] || '',
       };
     },
 
