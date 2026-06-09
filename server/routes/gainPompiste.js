@@ -137,7 +137,7 @@ router.delete('/:id',verifyJWT,requireRole(['owner','manager']), async (req, res
         id
     );
 
-    return res.json({message : "Gain deleted successfully", gain: deletedCustomer});
+    return res.json({message : "Gain deleted successfully", gain: deletedGain});
   } catch (error) {
       res.status(500).json({ error: error.message });
   }
