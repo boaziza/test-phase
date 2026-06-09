@@ -67,6 +67,7 @@ app.use('/api/accounts',          accountsLimiter, require('./routes/authAppwrit
 app.use('/api/shift-submit',       require('./routes/shiftSubmit'));
 app.use('/api/bonuses',           require('./routes/bonuses'));
 app.use('/api/devices',           require('./routes/devices'));
+app.use('/api/reconcile-pos',     require('./routes/reconcilePos'));
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 

@@ -113,6 +113,7 @@
 
   async function selectDate(date) {
     if (_isEditing) { _isEditing = false; _setEditUI(false); }
+    _pos.close();
     activeDate = date;
     document.querySelectorAll(".recent-item").forEach(el =>
       el.classList.toggle("recent-active", el.dataset.date === date)
@@ -266,6 +267,8 @@
       if (doneEl) doneEl.textContent = doc.done ? "Yes ✓" : "No";
 
       _setEditBtn(true);
+      const posBtn = document.getElementById('sitPosAuditBtn');
+      if (posBtn) posBtn.style.display = '';
 
     } catch (err) {
       toast("Error loading situation: " + (err?.message || err), "error");
@@ -618,6 +621,270 @@
     }
   }
 
+  // ── POS Reconciliation ────────────────────────────────────────────────────────
+
+  const _pos = {
+    _open: false,
+
+    toggle() {
+      _pos._open = !_pos._open;
+      const panel = document.getElementById('posAuditPanel');
+      if (!panel) return;
+      if (_pos._open) {
+        panel.style.display = '';
+        panel.innerHTML = _pos._panelHTML();
+      } else {
+        panel.style.display = 'none';
+      }
+    },
+
+    close() {
+      _pos._open = false;
+      const panel = document.getElementById('posAuditPanel');
+      if (panel) panel.style.display = 'none';
+    },
+
+    _panelHTML() {
+      return `
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1.25rem;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
+            <div>
+              <div style="font-weight:700;font-size:15px;color:var(--navy)">POS Reconciliation</div>
+              <div style="font-size:12px;color:#64748b;margin-top:2px;">${activeDate || '—'} — compare AdvaTech POS export against RP data</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+              <label style="cursor:pointer;background:var(--navy,#1b263b);color:#fff;font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;white-space:nowrap;">
+                Upload CSV
+                <input type="file" accept=".csv" style="display:none;"
+                       onchange="window._sit._posHandleFile(this.files[0])">
+              </label>
+              <button onclick="window._sit.togglePosPanel()"
+                      style="background:none;border:1px solid #cbd5e1;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:13px;color:#64748b;">✕</button>
+            </div>
+          </div>
+          <div id="posAuditResults" style="font-size:13px;color:#64748b;">
+            Upload the AdvaTech POS export for <strong>${activeDate || 'this date'}</strong> to check for discrepancies.
+            The CSV is filtered to this date client-side — you can upload the full monthly file.
+          </div>
+        </div>`;
+    },
+
+    // ── CSV parsing ───────────────────────────────────────────────────────────
+
+    _parseLine(line) {
+      const fields = [];
+      let cur = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ',' && !inQ) { fields.push(cur); cur = ''; }
+        else { cur += c; }
+      }
+      fields.push(cur);
+      return fields;
+    },
+
+    _parseCSV(text) {
+      const lines = text.trim().split(/\r?\n/);
+      if (lines.length < 2) return [];
+      const headers = _pos._parseLine(lines[0]).map(h => h.trim().toLowerCase());
+      return lines.slice(1).filter(l => l.trim()).map(l => {
+        const vals = _pos._parseLine(l);
+        const row = {};
+        headers.forEach((h, i) => { row[h] = (vals[i] || '').trim(); });
+        return row;
+      });
+    },
+
+    _mapRow(row) {
+      // Date field from AdvaTech CSV: "2026/05/01,00:03:45" (quoted in file, comma inside)
+      // After our parser strips quotes: "2026/05/01,00:03:45"
+      const rawDate = row['date'] || '';
+      const [datePart = '', timePart = '00:00'] = rawDate.split(',');
+      const date = datePart.replace(/\//g, '-').trim(); // "2026-05-01"
+
+      const product = (row['product'] || '').toUpperCase();
+      const fuelType = product === 'ESSENCE' ? 'PMS'
+                     : (product.includes('DIESEL') || product.includes('GASOIL') || product === 'AGO') ? 'AGO'
+                     : 'OTHER';
+
+      const method = (row['payment method'] || row['payment_method'] || '').trim().toUpperCase();
+
+      return {
+        date,
+        time:       timePart.trim().substring(0, 5),
+        fuelType,
+        amount:     Number(row['amount'])  || 0,
+        volume:     Number(row['volume'])  || 0,
+        method,
+        customerId: row['customer id'] || row['customer_id'] || '',
+      };
+    },
+
+    // ── File handler ──────────────────────────────────────────────────────────
+
+    async handleFile(file) {
+      if (!file || !activeDate) return;
+      const resultsEl = document.getElementById('posAuditResults');
+      if (!resultsEl) return;
+      resultsEl.innerHTML = '<div style="color:var(--navy,#1b263b);padding:6px 0;">Parsing CSV…</div>';
+
+      try {
+        const text    = await file.text();
+        const allRows = _pos._parseCSV(text);
+        const dayRows = allRows
+          .map(_pos._mapRow)
+          .filter(r => r.date === activeDate && r.amount > 0);
+
+        if (dayRows.length === 0) {
+          resultsEl.innerHTML = `<div style="color:#ef4444;padding:6px 0;">
+            No transactions found for <strong>${activeDate}</strong> in this file.<br>
+            Check that the CSV covers this date and that the Date column format is <em>YYYY/MM/DD,HH:MM:SS</em>.
+          </div>`;
+          return;
+        }
+
+        resultsEl.innerHTML = `<div style="color:#64748b;padding:6px 0;">Found ${dayRows.length} transactions for ${activeDate}. Running checks…</div>`;
+
+        const stationId = state.viewingStation?.$id || state.profile?.stationId;
+        const res = await apiFetch('/reconcile-pos', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ date: activeDate, stationId, csvRows: dayRows }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          resultsEl.innerHTML = `<div style="color:#ef4444;">Server error: ${err.error || 'Reconcile failed'}</div>`;
+          return;
+        }
+
+        const result = await res.json();
+        resultsEl.innerHTML = _pos._renderResults(result);
+
+      } catch (err) {
+        const el = document.getElementById('posAuditResults');
+        if (el) el.innerHTML = `<div style="color:#ef4444;">Error: ${err.message}</div>`;
+      }
+    },
+
+    // ── Results renderer ──────────────────────────────────────────────────────
+
+    _fmt(n)  { return Math.round(Number(n) || 0).toLocaleString(); },
+    _fmtL(n) { return (Number(n) || 0).toFixed(2); },
+
+    _statusBadge(clean, skipped) {
+      if (skipped) return '<span style="background:#f1f5f9;color:#64748b;font-size:11px;padding:2px 7px;border-radius:999px;">N/A</span>';
+      return clean
+        ? '<span style="background:#dcfce7;color:#16a34a;font-size:11px;padding:2px 7px;border-radius:999px;">✓ Clean</span>'
+        : '<span style="background:#fee2e2;color:#ef4444;font-size:11px;padding:2px 7px;border-radius:999px;">⚠ Issues</span>';
+    },
+
+    _section(title, clean, skipped, body) {
+      const badge = _pos._statusBadge(clean, skipped);
+      return `
+        <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;
+                      padding:9px 12px;background:${(!skipped && !clean) ? '#fff7f7' : '#f8fafc'};
+                      border-bottom:1px solid #e2e8f0;">
+            <span style="font-weight:600;font-size:13px;color:var(--navy,#1b263b);">${title}</span>
+            ${badge}
+          </div>
+          <div style="padding:10px 12px;font-size:12px;">${body}</div>
+        </div>`;
+    },
+
+    _table(rows) {
+      const thead = `<tr style="background:#f1f5f9;">
+        <th style="padding:5px 8px;text-align:left;font-weight:600;">Category</th>
+        <th style="padding:5px 8px;text-align:right;font-weight:600;">POS (CSV)</th>
+        <th style="padding:5px 8px;text-align:right;font-weight:600;">RP</th>
+        <th style="padding:5px 8px;text-align:right;font-weight:600;">Gap</th>
+      </tr>`;
+      return `<table style="width:100%;border-collapse:collapse;">${thead}<tbody>${rows}</tbody></table>`;
+    },
+
+    _tableRow(label, csvVal, rpVal, gap, fmtFn, unit) {
+      const flagged = Math.abs(gap) > 0;
+      const gapTxt  = (gap > 0 ? '+' : '') + fmtFn(gap) + ' ' + unit;
+      const color   = flagged ? '#ef4444' : '#16a34a';
+      return `<tr style="border-top:1px solid #f1f5f9;">
+        <td style="padding:5px 8px;">${label}</td>
+        <td style="padding:5px 8px;text-align:right;">${fmtFn(csvVal)} ${unit}</td>
+        <td style="padding:5px 8px;text-align:right;">${fmtFn(rpVal)} ${unit}</td>
+        <td style="padding:5px 8px;text-align:right;color:${color};font-weight:${flagged ? 700 : 400};">${gapTxt}</td>
+      </tr>`;
+    },
+
+    _renderResults(r) {
+      const { checks, csvRowCount, hasRpData } = r;
+
+      if (!hasRpData) {
+        return `<div style="color:#b45309;background:#fef3c7;padding:10px 14px;border-radius:6px;font-size:13px;">
+          No Situation record found in RP for <strong>${r.date}</strong>.<br>
+          Submit the situation sheet first, then run the POS audit.
+        </div>`;
+      }
+
+      const { payments, volume, ficheGhosts, ficheSuppressed, grandTotal: gt } = checks;
+
+      // Check 1 — Payments
+      const payBody = _pos._table(
+        payments.rows.map(c => _pos._tableRow(c.label, c.csv, c.rp, c.gap, _pos._fmt, 'RWF')).join('')
+      );
+
+      // Check 2 — Volume
+      const volBody = _pos._table(
+        volume.rows.map(c => _pos._tableRow(c.label, c.csv, c.rp, c.gap, _pos._fmtL, 'L')).join('')
+      );
+
+      // Check 3 — Fiche ghosts
+      const ghostBody = ficheGhosts.skipped
+        ? '<span style="color:#64748b;">Skipped — fiche logDate not indexed in Appwrite.</span>'
+        : ficheGhosts.clean
+          ? '<span style="color:#16a34a;">No ghost fiche entries found.</span>'
+          : ficheGhosts.items.map(f =>
+              `<div style="padding:4px 0;border-bottom:1px solid #f1f5f9;color:#ef4444;">
+                ⚠ ${_pos._fmt(f.amount)} RWF — Customer: ${f.customerId} — <em style="color:#64748b;">${f.note}</em>
+              </div>`).join('');
+
+      // Check 4 — Fiche suppressed
+      const suppBody = ficheSuppressed.skipped
+        ? '<span style="color:#64748b;">Skipped — fiche logDate not indexed in Appwrite.</span>'
+        : ficheSuppressed.clean
+          ? '<span style="color:#16a34a;">No suppressed fiche entries found.</span>'
+          : ficheSuppressed.items.map(f =>
+              `<div style="padding:4px 0;border-bottom:1px solid #f1f5f9;color:#ef4444;">
+                ⚠ ${_pos._fmt(f.amount)} RWF — Customer: ${f.customerId} — <em style="color:#64748b;">${f.note}</em>
+              </div>`).join('');
+
+      // Check 5 — Grand total
+      const gtColor  = gt.clean ? '#16a34a' : '#ef4444';
+      const gtBody   = `
+        <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+          <div>POS total: <strong>${_pos._fmt(gt.csv)} RWF</strong></div>
+          <div>RP total: <strong>${_pos._fmt(gt.rp)} RWF</strong></div>
+          <div style="color:${gtColor};font-weight:700;">Gap: ${gt.gap >= 0 ? '+' : ''}${_pos._fmt(gt.gap)} RWF</div>
+        </div>`;
+
+      const allClean = payments.clean && volume.clean && ficheGhosts.clean && ficheSuppressed.clean && gt.clean;
+      const summary  = allClean
+        ? `<div style="background:#dcfce7;color:#166534;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:600;margin-bottom:12px;">
+            ✓ All checks passed — ${csvRowCount} POS transactions match RP data for ${r.date}.
+           </div>`
+        : `<div style="background:#fef3c7;color:#92400e;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:600;margin-bottom:12px;">
+            ⚠ Discrepancies found — review flagged checks below. ${csvRowCount} POS transactions analysed.
+           </div>`;
+
+      return summary
+        + _pos._section('Check 1 — Payment Methods',          payments.clean,          false,                    payBody)
+        + _pos._section('Check 2 — Volume (litres)',          volume.clean,            false,                    volBody)
+        + _pos._section('Check 3 — Fiche Ghost Entries',      ficheGhosts.clean,       ficheGhosts.skipped,      ghostBody)
+        + _pos._section('Check 4 — Fiche Suppression',        ficheSuppressed.clean,   ficheSuppressed.skipped,  suppBody)
+        + _pos._section('Check 5 — Grand Total',              gt.clean,                false,                    gtBody);
+    },
+  };
+
   // ── Init ─────────────────────────────────────────────────────────────────────
 
   async function initSituation() {
@@ -684,6 +951,11 @@
   }
 
   window._sections.situation = initSituation;
-  window._sit = { selectDate, changeCalMonth, download, enterEditMode, exitEditMode, saveEdit, recalcNozzles };
+  window._sit = {
+    selectDate, changeCalMonth, download,
+    enterEditMode, exitEditMode, saveEdit, recalcNozzles,
+    togglePosPanel: () => _pos.toggle(),
+    _posHandleFile: (f) => _pos.handleFile(f),
+  };
 
 })();
