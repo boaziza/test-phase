@@ -685,9 +685,9 @@
     },
 
     _parseCSV(text) {
-      // Strip UTF-8 BOM (﻿) — Excel-exported CSVs always include it and it
-      // silently corrupts the first header name, making row['date'] return undefined.
-      const clean = text.replace(/^﻿/, '').trim();
+      // Strip UTF-8 BOM (U+FEFF) — Excel-exported CSVs always include it; it
+      // silently corrupts the first header name making row['date'] return undefined.
+      const clean = (text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text).trim();
       const lines = clean.split(/\r?\n/);
       if (lines.length < 2) return [];
       const headers = _pos._parseLine(lines[0]).map(h => h.trim().toLowerCase());
@@ -739,15 +739,24 @@
       try {
         const text    = await file.text();
         const allRows = _pos._parseCSV(text);
-        const dayRows = allRows
-          .map(_pos._mapRow)
-          .filter(r => r.date === activeDate && r.amount > 0);
+        const mapped  = allRows.map(_pos._mapRow);
+        const dayRows = mapped.filter(r => r.date === activeDate && r.amount > 0);
 
         if (dayRows.length === 0) {
-          resultsEl.innerHTML = `<div style="color:#ef4444;padding:6px 0;">
-            No transactions found for <strong>${activeDate}</strong> in this file.<br>
-            Check that the CSV covers this date and that the Date column format is <em>YYYY/MM/DD,HH:MM:SS</em>.
-          </div>`;
+          // Diagnostic: show what dates the parser actually found
+          const dateCounts = {};
+          mapped.forEach(r => { const k = r.date || '(empty)'; dateCounts[k] = (dateCounts[k] || 0) + 1; });
+          const dateList = Object.entries(dateCounts)
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([d, n]) => `<code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;">${d}</code> (${n} rows)`)
+            .join(', ') || 'none';
+          resultsEl.innerHTML = `
+            <div style="color:#ef4444;padding:6px 0;margin-bottom:8px;">
+              No transactions found for <strong>${activeDate}</strong> — ${allRows.length} total rows parsed.
+            </div>
+            <div style="font-size:12px;color:#64748b;">
+              <strong>Dates the parser found:</strong> ${dateList}
+            </div>`;
           return;
         }
 
