@@ -199,9 +199,9 @@
           <!-- Mini Calendar -->
           <div class="cal-section">
             <div class="cal-nav">
-              <button aria-label="Previous month" onclick="this.disabled=true; changeCalMonth(-1).finally(()=>this.disabled=false)">‹</button>
+              <button aria-label="Previous month" onclick="this.disabled=true; window._sit.changeCalMonth(-1).finally(()=>this.disabled=false)">‹</button>
               <span id="calMonthLabel" aria-live="polite">—</span>
-              <button aria-label="Next month" onclick="this.disabled=true; changeCalMonth(1).finally(()=>this.disabled=false)">›</button>
+              <button aria-label="Next month" onclick="this.disabled=true; window._sit.changeCalMonth(1).finally(()=>this.disabled=false)">›</button>
             </div>
             <div class="cal-grid" id="calGrid"></div>
             <div class="cal-legend">
