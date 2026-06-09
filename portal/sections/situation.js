@@ -685,7 +685,10 @@
     },
 
     _parseCSV(text) {
-      const lines = text.trim().split(/\r?\n/);
+      // Strip UTF-8 BOM (﻿) — Excel-exported CSVs always include it and it
+      // silently corrupts the first header name, making row['date'] return undefined.
+      const clean = text.replace(/^﻿/, '').trim();
+      const lines = clean.split(/\r?\n/);
       if (lines.length < 2) return [];
       const headers = _pos._parseLine(lines[0]).map(h => h.trim().toLowerCase());
       return lines.slice(1).filter(l => l.trim()).map(l => {
@@ -697,11 +700,15 @@
     },
 
     _mapRow(row) {
-      // Date field from AdvaTech CSV: "2026/05/01,00:03:45" (quoted in file, comma inside)
-      // After our parser strips quotes: "2026/05/01,00:03:45"
+      // Date field from AdvaTech CSV: "2026/05/31,00:03:45" (quoted in file, comma inside)
+      // After our parser strips quotes: "2026/05/31,00:03:45"
       const rawDate = row['date'] || '';
       const [datePart = '', timePart = '00:00'] = rawDate.split(',');
-      const date = datePart.replace(/\//g, '-').trim(); // "2026-05-01"
+      // Normalise to YYYY-MM-DD regardless of whether month/day are zero-padded
+      const [y = '', m = '', d = ''] = datePart.trim().split('/');
+      const date = y && m && d
+        ? `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+        : datePart.replace(/\//g, '-').trim();
 
       const product = (row['product'] || '').toUpperCase();
       const fuelType = product === 'ESSENCE' ? 'PMS'
