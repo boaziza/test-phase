@@ -743,19 +743,30 @@
         const dayRows = mapped.filter(r => r.date === activeDate && r.amount > 0);
 
         if (dayRows.length === 0) {
-          // Diagnostic: show what dates the parser actually found
+          // Diagnostic: show what dates the parser actually found, plus raw header/row info
           const dateCounts = {};
           mapped.forEach(r => { const k = r.date || '(empty)'; dateCounts[k] = (dateCounts[k] || 0) + 1; });
           const dateList = Object.entries(dateCounts)
             .sort((a, b) => a[0].localeCompare(b[0]))
+            .slice(0, 10)
             .map(([d, n]) => `<code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;">${d}</code> (${n} rows)`)
             .join(', ') || 'none';
+
+          const headerKeys = allRows[0] ? Object.keys(allRows[0]) : [];
+          const firstRowJson = allRows[0] ? JSON.stringify(allRows[0]) : '(no rows)';
+
           resultsEl.innerHTML = `
             <div style="color:#ef4444;padding:6px 0;margin-bottom:8px;">
               No transactions found for <strong>${activeDate}</strong> — ${allRows.length} total rows parsed.
             </div>
-            <div style="font-size:12px;color:#64748b;">
+            <div style="font-size:12px;color:#64748b;margin-bottom:6px;">
               <strong>Dates the parser found:</strong> ${dateList}
+            </div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:6px;">
+              <strong>Detected column headers:</strong> ${headerKeys.map(h => `<code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;">${h}</code>`).join(', ')}
+            </div>
+            <div style="font-size:11px;color:#94a3b8;word-break:break-all;">
+              <strong>First row raw:</strong> ${firstRowJson}
             </div>`;
           return;
         }
