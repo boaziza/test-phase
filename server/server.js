@@ -24,6 +24,11 @@ app.use(cors({
   credentials: true,
 }));
 
+// Higher body limit for POS reconciliation — a day's CSV transactions as JSON
+// can exceed the global 50kb limit. Must be registered before the global parser
+// below since express.json() skips re-parsing once req.body is already set.
+app.use('/api/reconcile-pos', express.json({ limit: '1mb' }));
+
 app.use(express.json({ limit: '50kb' }));
 
 // ── Rate limiting ─────────────────────────────────────────────
