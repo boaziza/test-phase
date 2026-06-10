@@ -28,6 +28,7 @@ async function rollback(created, patched) {
 router.post('/', verifyJWT, requireDevice, requireRole(['pompiste']), async (req, res) => {
   const {
     shift, logDate, monthYear,
+    startTime = '', endTime = '',
     employeeName,
     nozzleReadings = [],
     gainPayments   = 0,
@@ -118,6 +119,7 @@ router.post('/', verifyJWT, requireDevice, requireRole(['pompiste']), async (req
     const report = await db.createDocument(DB, C_REPORT, ID.unique(), {
       companyId, stationId, email,
       employeeName, shift, logDate, shiftKey,
+      startTime, endTime,
       pmsPrice:       totals.pmsPrice,
       agoPrice:       totals.agoPrice,
       totalPms:       totals.totalPms       || 0,

@@ -4,6 +4,11 @@ let _nozzles    = [];     // enriched nozzle list (active only, sorted by pump�
 let _nozzleEntries = []; // [{nozzleId,fuelType,pumpId,pumpNumber,nozzleNumber,startReading,endReading,venteLitres}]
 let _calcDone   = false;  // true only after calculateIndex passes
 
+// Shift timing — startTime captured on first Calculate Index for this date+shift,
+// endTime captured at submission time
+let shiftStartTime = null;
+let _shiftTimerKey  = null;
+
 // Computed totals — set by calculateIndex, consumed by payments + situation
 let totalVente, venteLitresPms, totalPms, venteLitresAgo, totalAgo;
 let pmsPrice, agoPrice, logDate, shift;
@@ -182,6 +187,12 @@ async function calculateIndex() {
 
   if (!logDate) { toast("Select a date.", "warning"); return; }
   if (!shift)   { toast("Select a shift.", "warning"); return; }
+
+  const timerKey = `${logDate}_${shift}`;
+  if (_shiftTimerKey !== timerKey) {
+    shiftStartTime = new Date().toISOString();
+    _shiftTimerKey  = timerKey;
+  }
 
   const rows = [...document.querySelectorAll("#nozzleInputsContainer .pump-row[data-nozzle-id]")];
   if (!rows.length) { toast("No nozzles loaded. Refresh and try again.", "warning"); return; }
@@ -383,11 +394,15 @@ async function situation() {
 
     const activeEntries = _nozzleEntries.filter(e => e.startReading > 0 || e.endReading > 0);
 
+    const startTime = shiftStartTime || new Date().toISOString();
+    const endTime   = new Date().toISOString();
+
     const res = await apiFetch("/shift-submit", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({
         shift, logDate, monthYear,
+        startTime, endTime,
         email, employeeName: employee, companyId, stationId, userId,
         gainPayments,
         nozzleReadings: activeEntries,
@@ -425,6 +440,8 @@ async function situation() {
     _calcDone      = false;
     _nozzleEntries = [];
     totalVente     = undefined;
+    shiftStartTime = null;
+    _shiftTimerKey = null;
     renderResultCards({});
 
     document.querySelectorAll(".output").forEach(el => { el.textContent = "—"; });

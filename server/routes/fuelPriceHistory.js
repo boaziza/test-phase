@@ -39,7 +39,7 @@ router.post('/', verifyJWT, requireRole(['owner','manager']), async (req, res) =
  */
 router.get('/me', verifyJWT, requireRole(['owner','manager','pompiste']), async (req, res) => {
   try {
-    const stationId = req.user.stationId;
+    const { stationId } = req.user;
     if (!stationId) {
       return res.status(404).json({ error: "No station ID associated with this account." });
     }
@@ -47,10 +47,9 @@ router.get('/me', verifyJWT, requireRole(['owner','manager','pompiste']), async 
     const fuelPriceHistory = await db.listDocuments(
       DATABASE_ID,
       COLLECTION_FUEL_PRICE_HISTORY_ID,
-      [
-        Query.equal('stationId', stationId) // The search filter
-      ]
+      [Query.equal('stationId', stationId)]
     );
+
     res.json({ fuelPriceHistory });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -67,7 +66,9 @@ router.get('/', verifyJWT, requireRole(['owner','manager']), async (req, res) =>
     const scopedStation = station || (req.user.role !== 'owner' ? req.user.stationId : null);
 
     const queries = [Query.limit(Number(limit)), Query.offset(Number(offset)), Query.orderDesc('effectiveFrom')];
-    if (scopedStation) queries.push(Query.equal('stationId', scopedStation));
+    if (scopedStation) {
+      queries.push(Query.equal('stationId', scopedStation));
+    }
 
     const { documents, total } = await db.listDocuments(DATABASE_ID, COLLECTION_FUEL_PRICE_HISTORY_ID, queries);
     res.json({ fuelPriceHistory: documents, total });
