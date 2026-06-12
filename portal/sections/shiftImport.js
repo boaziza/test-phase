@@ -347,7 +347,56 @@
         </div>
       </div>`;
 
+    html += renderDebugTable();
+
     el.innerHTML = html;
+  }
+
+  // Shows exactly what was parsed from the CSV per slot — nozzle readings
+  // (incl. AGO), gain, loans and fiche — so mismatches can be spotted before
+  // generating the preview.
+  function renderDebugTable() {
+    let html = `
+      <div class="settings-card" style="margin-top:16px;">
+        <div class="settings-card-title">Detected Detail (raw CSV parse)</div>
+        <table class="nozzle-table" style="width:100%;">
+          <thead><tr><th>Slot</th><th>PMS Readings</th><th>AGO Readings</th><th>Gain</th><th>Loans</th><th>Fiche</th></tr></thead>
+          <tbody>`;
+
+    for (const s of _slots) {
+      const nozzles = _nozzlesBySlot[s] || [];
+      const pms = nozzles.filter(n => n.fuelType === 'PMS');
+      const ago = nozzles.filter(n => n.fuelType === 'AGO');
+      const loans = _loansBySlot[s] || [];
+      const fiche = _ficheBySlot[s] || [];
+
+      const fmtReadings = (list) => list.length
+        ? list.map(n => {
+            const mapped = _pumpMap[n.pumpNumber] && _pumpMap[n.pumpNumber].nozzles[0];
+            const flag = mapped ? '' : ' <span class="diff-bad">(no pump/nozzle found — will be skipped)</span>';
+            return `${n.label}: ${fmt(n.startReading)} → ${fmt(n.endReading)} (Δ${fmt(parseFloat((n.endReading - n.startReading).toFixed(3)))})${flag}`;
+          }).join('<br>')
+        : '—';
+      const fmtEntries = (list) => list.length
+        ? list.map(e => `${e.customerName}: ${fmt(e.amount)}`).join('<br>')
+        : '—';
+
+      html += `
+        <tr>
+          <td>${s}</td>
+          <td>${fmtReadings(pms)}</td>
+          <td>${fmtReadings(ago)}</td>
+          <td class="num">${fmt((_summary[s] && _summary[s].gainPayments) || 0)}</td>
+          <td>${fmtEntries(loans)}</td>
+          <td>${fmtEntries(fiche)}</td>
+        </tr>`;
+    }
+
+    html += `
+          </tbody>
+        </table>
+      </div>`;
+    return html;
   }
 
   // ── Preview generation (mirrors scripts/shift_review.html) ─────────────────
