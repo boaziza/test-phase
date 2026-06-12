@@ -509,17 +509,17 @@
       const sum = _summary[s] || {};
       const loans = _loansBySlot[s] || [];
       const fiche = _ficheBySlot[s] || [];
-      const totalLoans = loans.reduce((acc, e) => acc + e.amount, 0);
-      const totalFiche = fiche.reduce((acc, e) => acc + e.amount, 0);
+      const totalLoans = Math.round(loans.reduce((acc, e) => acc + e.amount, 0));
+      const totalFiche = Math.round(fiche.reduce((acc, e) => acc + e.amount, 0));
 
       const payments = {
-        totalCash: sum.totalCash || 0,
-        momo: sum.momo || 0,
-        momoLoss: sum.momoLoss || 0,
-        bankCard: sum.bankCard || 0,
-        spFuelCard: sum.spFuelCard || 0,
-        bon: sum.bon || 0,
-        gainPayments: sum.gainPayments || 0,
+        totalCash: Math.round(sum.totalCash || 0),
+        momo: Math.round(sum.momo || 0),
+        momoLoss: Math.round(sum.momoLoss || 0),
+        bankCard: Math.round(sum.bankCard || 0),
+        spFuelCard: Math.round(sum.spFuelCard || 0),
+        bon: Math.round(sum.bon || 0),
+        gainPayments: Math.round(sum.gainPayments || 0),
         totalFiche, totalLoans, listBC: [], listSFC: [],
         cash5000: 0, cash2000: 0, cash1000: 0, cash500: 0,
       };
@@ -570,8 +570,8 @@
         shift, logDate: date, monthYear,
         email: pompiste.email, employeeName: pompiste.name, userId: pompiste.userId,
         nozzleReadings, gainPayments: payments.gainPayments, payments, totals,
-        fiche: fiche.map(e => ({ customerName: e.customerName, amount: e.amount })),
-        loans: loans.map(e => ({ customerName: e.customerName, amount: e.amount })),
+        fiche: fiche.map(e => ({ customerName: e.customerName, amount: Math.round(e.amount) })),
+        loans: loans.map(e => ({ customerName: e.customerName, amount: Math.round(e.amount) })),
       });
     }
 
