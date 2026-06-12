@@ -10,7 +10,9 @@
   let _ficheBySlot    = null;
   let _meta        = null;  // { date, pmsPrice, agoPrice }
   let _slots       = [];
-  let _pumpMap     = null;  // pumpNumber -> { pumpId, nozzles: [{nozzleId, nozzleNumber}] }
+  let _allNozzles  = [];    // station's real nozzles: { nozzleId, pumpId, pumpNumber, nozzleNumber, fuelType, label }
+  let _csvLabels   = [];    // unique CSV reading labels detected: { key, fuelType, pumpNumber, display }
+  let _nozzleMap   = {};    // csvLabelKey -> entry from _allNozzles (or null if unmapped)
   let _pompistes   = [];    // station's pompiste users
   let _lastShifts  = null;  // built shifts payload from last "Generate Preview"
 
@@ -18,7 +20,7 @@
   function init() {
     _grid = null; _summary = null; _dayTotal = null; _nozzlesBySlot = null;
     _loansBySlot = null; _ficheBySlot = null; _meta = null; _slots = [];
-    _pumpMap = null; _pompistes = []; _lastShifts = null;
+    _allNozzles = []; _csvLabels = []; _nozzleMap = {}; _pompistes = []; _lastShifts = null;
 
     const fileInput = document.getElementById('shiftImportFile');
     if (fileInput) fileInput.value = '';
@@ -280,17 +282,18 @@
     ]);
     _pompistes = (usersRes.users || []).filter(u => u.role === 'pompiste');
 
-    _pumpMap = {};
-    for (const pump of (pumpsRes.pumps || [])) {
-      _pumpMap[pump.pumpNumber] = { pumpId: pump.$id, nozzles: [] };
-    }
-    for (const nz of (nozzlesRes.nozzles || [])) {
+    _allNozzles = (nozzlesRes.nozzles || []).map(nz => {
       const pump = (pumpsRes.pumps || []).find(p => p.$id === nz.pumpId);
-      if (!pump || !_pumpMap[pump.pumpNumber]) continue;
-      _pumpMap[pump.pumpNumber].nozzles.push({ nozzleId: nz.$id, nozzleNumber: nz.nozzleNumber });
-    }
+      return {
+        nozzleId: nz.$id, pumpId: nz.pumpId,
+        pumpNumber: pump ? pump.pumpNumber : null,
+        nozzleNumber: nz.nozzleNumber, fuelType: nz.fuelType, label: nz.label || '',
+      };
+    }).sort((a, b) => (a.pumpNumber - b.pumpNumber) || (a.nozzleNumber - b.nozzleNumber));
 
-    _showStatus(`Detected ${_slots.length} slot(s). Review the assignments below, then generate a preview.`, 'success');
+    buildNozzleMap(stationId);
+
+    _showStatus(`Detected ${_slots.length} slot(s). Review the pump mapping and assignments below, then generate a preview.`, 'success');
     renderAssignTable();
   }
 
@@ -300,6 +303,85 @@
     const n = norm(name);
     const exact = _pompistes.find(p => norm(p.name) === n || norm(p.name).includes(n) || n.includes(norm(p.name)));
     return exact ? exact.userId : '';
+  }
+
+  // ── Pump/nozzle mapping ──────────────────────────────────────────────────
+  // The CSV report labels readings "PMS P1".."AGO P6" — these positions are
+  // a property of the printed report layout, not of the station's actual
+  // pumps/nozzles. So each distinct CSV label is mapped (manually, with a
+  // saved default) to one real nozzle from _allNozzles.
+
+  function csvLabelKey(r) { return `${r.fuelType}_P${r.pumpNumber}`; }
+  function csvLabelDisplay(r) { return `${r.fuelType} P${r.pumpNumber}`; }
+
+  function buildNozzleMap(stationId) {
+    const labels = new Map();
+    for (const s of _slots) {
+      for (const r of (_nozzlesBySlot[s] || [])) {
+        const key = csvLabelKey(r);
+        if (!labels.has(key)) labels.set(key, { key, fuelType: r.fuelType, pumpNumber: r.pumpNumber, display: csvLabelDisplay(r) });
+      }
+    }
+    _csvLabels = [...labels.values()].sort((a, b) => (a.pumpNumber - b.pumpNumber) || a.fuelType.localeCompare(b.fuelType));
+
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(`shiftImportNozzleMap_${stationId}`) || '{}'); } catch (e) {}
+
+    _nozzleMap = {};
+    const used = new Set();
+    for (const lbl of _csvLabels) {
+      let nozzle = saved[lbl.key] ? _allNozzles.find(n => n.nozzleId === saved[lbl.key]) : null;
+      if (!nozzle) {
+        nozzle = _allNozzles.find(n => n.fuelType === lbl.fuelType && !used.has(n.nozzleId))
+              || _allNozzles.find(n => n.fuelType === lbl.fuelType);
+      }
+      _nozzleMap[lbl.key] = nozzle || null;
+      if (nozzle) used.add(nozzle.nozzleId);
+    }
+  }
+
+  function onNozzleMapChange(key, nozzleId) {
+    _nozzleMap[key] = _allNozzles.find(n => n.nozzleId === nozzleId) || null;
+
+    const toSave = {};
+    for (const k in _nozzleMap) {
+      if (_nozzleMap[k]) toSave[k] = _nozzleMap[k].nozzleId;
+    }
+    try { localStorage.setItem(`shiftImportNozzleMap_${getStationId()}`, JSON.stringify(toSave)); } catch (e) {}
+
+    renderAssignTable();
+  }
+
+  function renderMappingTable() {
+    if (!_csvLabels.length) return '';
+
+    let html = `
+      <div class="settings-card">
+        <div class="settings-card-title">Step 1.5 — Map CSV Pumps to Real Nozzles</div>
+        <p class="settings-hint">This report's "P#" rows are positions on the printed sheet, not your station's pump/nozzle numbers. Map each one to the correct nozzle — this is remembered for next time.</p>
+        <table class="nozzle-table" style="width:100%;">
+          <thead><tr><th>CSV Reading</th><th>Maps to</th></tr></thead>
+          <tbody>`;
+
+    for (const lbl of _csvLabels) {
+      const current = _nozzleMap[lbl.key];
+      html += `
+        <tr>
+          <td>${lbl.display}</td>
+          <td>
+            <select id="shiftImportNozzleMap_${lbl.key}" onchange="window._shiftImport.onNozzleMapChange('${lbl.key}', this.value)">
+              <option value="">— unmapped (skip) —</option>
+              ${_allNozzles.map(n => `<option value="${n.nozzleId}" ${current && current.nozzleId === n.nozzleId ? 'selected' : ''}>Pump ${n.pumpNumber ?? '?'} / Nozzle ${n.nozzleNumber} (${n.fuelType}${n.label ? ' — ' + n.label : ''})</option>`).join('')}
+            </select>
+          </td>
+        </tr>`;
+    }
+
+    html += `
+          </tbody>
+        </table>
+      </div>`;
+    return html;
   }
 
   function renderAssignTable() {
@@ -349,7 +431,7 @@
 
     html += renderDebugTable();
 
-    el.innerHTML = html;
+    el.innerHTML = renderMappingTable() + html;
   }
 
   // Shows exactly what was parsed from the CSV per slot — nozzle readings
@@ -372,8 +454,8 @@
 
       const fmtReadings = (list) => list.length
         ? list.map(n => {
-            const mapped = _pumpMap[n.pumpNumber] && _pumpMap[n.pumpNumber].nozzles[0];
-            const flag = mapped ? '' : ' <span class="diff-bad">(no pump/nozzle found — will be skipped)</span>';
+            const mapped = _nozzleMap[csvLabelKey(n)];
+            const flag = mapped ? '' : ' <span class="diff-bad">(unmapped — will be skipped)</span>';
             return `${n.label}: ${fmt(n.startReading)} → ${fmt(n.endReading)} (Δ${fmt(parseFloat((n.endReading - n.startReading).toFixed(3)))})${flag}`;
           }).join('<br>')
         : '—';
@@ -447,12 +529,11 @@
       const rawNozzles = _nozzlesBySlot[s] || [];
       const nozzleReadings = [];
       for (const r of rawNozzles) {
-        const pumpEntry = _pumpMap[r.pumpNumber];
-        const nozzle = pumpEntry && pumpEntry.nozzles[0];
-        if (!pumpEntry || !nozzle) continue; // unmapped pump — skip this reading
+        const nozzle = _nozzleMap[csvLabelKey(r)];
+        if (!nozzle) continue; // unmapped CSV reading — skip
         nozzleReadings.push({
-          nozzleId: nozzle.nozzleId, pumpId: pumpEntry.pumpId,
-          fuelType: r.fuelType, pumpNumber: r.pumpNumber, nozzleNumber: nozzle.nozzleNumber,
+          nozzleId: nozzle.nozzleId, pumpId: nozzle.pumpId,
+          fuelType: r.fuelType, pumpNumber: nozzle.pumpNumber, nozzleNumber: nozzle.nozzleNumber,
           startReading: r.startReading, endReading: r.endReading,
           venteLitres: parseFloat((r.endReading - r.startReading).toFixed(3)),
         });
@@ -615,7 +696,7 @@
     el.innerHTML = html;
   }
 
-  window._shiftImport = { onFileChange, generatePreview, submitBatch };
+  window._shiftImport = { onFileChange, generatePreview, submitBatch, onNozzleMapChange };
   window._sections['shift-import'] = init;
 
 })();
