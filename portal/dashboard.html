@@ -81,6 +81,11 @@
         Bonuses
       </a>
 
+      <a href="#" class="nav-item" data-section="shift-import" data-roles="owner,manager">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Shift Import
+      </a>
+
       <div class="nav-section-label">Account</div>
 
       <a href="#" class="nav-item" data-section="settings" data-roles="owner">
@@ -750,6 +755,40 @@
     </section>
 
     <!-- ─────────────────────────────────────────────────────────────────────
+         SHIFT IMPORT  (owner / manager)
+         Offline-outage backfill: upload a Report Pompiste CSV, assign each
+         slot to a pompiste + shift, preview, then submit the whole day.
+    ───────────────────────────────────────────────────────────────────────── -->
+    <section id="section-shift-import" class="section" style="display:none;" data-roles="owner,manager">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title">Shift Import</h1>
+          <p class="section-sub">Backfill a full day's shifts from the Report Pompiste CSV (offline outage catch-up).</p>
+        </div>
+      </div>
+
+      <div style="max-width:900px;">
+
+        <div class="settings-card">
+          <div class="settings-card-title">Step 1 — Upload Report Pompiste CSV</div>
+          <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:8px;">
+            <input type="file" id="shiftImportFile" accept=".csv" onchange="window._shiftImport.onFileChange(this)">
+            <label>Report date: <input type="date" id="shiftImportDate"></label>
+            <label id="shiftImportStationRow">Station:
+              <select id="shiftImportStation"></select>
+            </label>
+          </div>
+          <div id="shiftImportStatus" class="status-msg" style="margin-top:10px;" aria-live="polite"></div>
+        </div>
+
+        <div id="shiftImportAssign" style="display:none;margin-top:16px;"></div>
+        <div id="shiftImportPreview" style="display:none;margin-top:16px;"></div>
+        <div id="shiftImportResults" style="display:none;margin-top:16px;"></div>
+
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
          SETTINGS  (owner only)
          Company name, fuel prices per station, password change.
     ───────────────────────────────────────────────────────────────────────── -->
@@ -1355,5 +1394,6 @@
   <script src="sections/account.js"></script>
   <script src="sections/emp-report.js"></script>
   <script src="sections/bonuses.js"></script>
+  <script src="sections/shiftImport.js"></script>
 </body>
 </html>

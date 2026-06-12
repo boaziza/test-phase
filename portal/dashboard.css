@@ -1263,6 +1263,13 @@ tbody tr:hover td { background: var(--rp-surface-off); }
 .section-settings .status-msg.success { color: #16a34a; }
 .section-settings .status-msg.error   { color: #dc2626; }
 
+/* ── Generic status-msg + diff cells (Shift Import, etc.) ───── */
+.status-msg.success { color: #16a34a; }
+.status-msg.error   { color: #dc2626; }
+.nozzle-table td.num, .nozzle-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.diff-ok  { color: #15803d; }
+.diff-bad { color: #b91c1c; font-weight: 600; }
+
 .section-settings .admin-row {
   display: flex; align-items: center; justify-content: space-between;
   padding: 9px 0; border-bottom: 1px solid #f1f5f9; gap: 10px;
