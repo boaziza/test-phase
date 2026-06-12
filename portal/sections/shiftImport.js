@@ -545,7 +545,7 @@
       const venteLitresAgo = parseFloat(ago.reduce((acc, r) => acc + (r.endReading - r.startReading), 0).toFixed(3));
       const totalPms = Math.round(venteLitresPms * pmsPrice);
       const totalAgo = Math.round(venteLitresAgo * agoPrice);
-      const totalVente = sum.totalVente || 0;
+      const totalVente = Math.round(sum.totalVente || 0);
 
       const totals = { pmsPrice, agoPrice, venteLitresPms, venteLitresAgo, totalPms, totalAgo, totalVente };
 
