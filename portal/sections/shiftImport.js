@@ -26,6 +26,8 @@
     if (fileInput) fileInput.value = '';
     const nameEl = document.getElementById('shiftImportFileName');
     if (nameEl) nameEl.textContent = 'No file selected';
+    const step1 = document.getElementById('shiftImportStep1');
+    if (step1) step1.open = true;
     document.getElementById('shiftImportAssign').style.display  = 'none';
     document.getElementById('shiftImportPreview').style.display = 'none';
     document.getElementById('shiftImportResults').style.display = 'none';
@@ -298,6 +300,8 @@
     buildNozzleMap(stationId);
 
     _showStatus(`Detected ${_slots.length} slot(s). Review the pump mapping and assignments below, then generate a preview.`, 'success');
+    const step1 = document.getElementById('shiftImportStep1');
+    if (step1) step1.open = false;
     renderAssignTable();
   }
 
@@ -360,9 +364,11 @@
     if (!_csvLabels.length) return '';
 
     let html = `
-      <div class="settings-card">
-        <div class="settings-card-title">Step 1.5 — Map CSV Pumps to Real Nozzles</div>
-        <p class="settings-hint">This report's "P#" rows are positions on the printed sheet, not your station's pump/nozzle numbers. Map each one to the correct nozzle — this is remembered for next time.</p>
+      <details class="settings-card" open>
+        <summary class="settings-card-title">2. Map Nozzles</summary>
+        <details class="info-hint"><summary>?</summary>
+          <p>This report's "P#" rows are positions on the printed sheet, not your station's pump/nozzle numbers. Map each one to the correct nozzle — this is remembered for next time.</p>
+        </details>
         <table class="nozzle-table" style="width:100%;">
           <thead><tr><th>CSV Reading</th><th>Maps to</th></tr></thead>
           <tbody>`;
@@ -384,7 +390,7 @@
     html += `
           </tbody>
         </table>
-      </div>`;
+      </details>`;
     return html;
   }
 
@@ -393,9 +399,11 @@
     el.style.display = '';
 
     let html = `
-      <div class="settings-card">
-        <div class="settings-card-title">Step 2 — Assign Pompiste &amp; Shift</div>
-        <p class="settings-hint">Map each detected slot to a real pompiste account and a shift name.</p>
+      <details class="settings-card" open>
+        <summary class="settings-card-title">3. Assign Pompiste &amp; Shift</summary>
+        <details class="info-hint"><summary>?</summary>
+          <p>Map each detected slot to a real pompiste account and a shift name.</p>
+        </details>
         <table class="nozzle-table" style="width:100%;">
           <thead><tr><th>Slot</th><th>CSV Name</th><th>Pompiste Account</th><th>Shift</th><th>Vente Total</th></tr></thead>
           <tbody>`;
@@ -431,7 +439,7 @@
           <label>AGO Price: <input type="number" id="shiftImportAgoPrice" value="${_meta.agoPrice ?? ''}"></label>
           <button class="btn-primary" onclick="window._shiftImport.generatePreview()">Generate Preview</button>
         </div>
-      </div>`;
+      </details>`;
 
     html += renderDebugTable();
 
@@ -443,10 +451,10 @@
   // generating the preview.
   function renderDebugTable() {
     let html = `
-      <div class="settings-card" style="margin-top:16px;">
-        <div class="settings-card-title">Detected Detail (raw CSV parse)</div>
+      <details class="settings-card debug-toggle">
+        <summary>Show parsed data</summary>
         <table class="nozzle-table" style="width:100%;">
-          <thead><tr><th>Slot</th><th>PMS Readings</th><th>AGO Readings</th><th>Gain</th><th>Loans</th><th>Fiche</th></tr></thead>
+          <thead><tr><th>Slot</th><th>PMS</th><th>AGO</th><th>Gain</th><th>Loans</th><th>Fiche</th></tr></thead>
           <tbody>`;
 
     for (const s of _slots) {
@@ -481,7 +489,7 @@
     html += `
           </tbody>
         </table>
-      </div>`;
+      </details>`;
     return html;
   }
 
@@ -600,7 +608,7 @@
     const expected = _dayTotal || {};
     const sorted = [...shifts].sort((a, b) => SHIFT_ORDER.indexOf(a.shift) - SHIFT_ORDER.indexOf(b.shift));
 
-    let html = `<div class="settings-card"><div class="settings-card-title">Step 3 — Preview (${date}, ${sorted.length} shift(s))</div>`;
+    let html = `<details class="settings-card" open><summary class="settings-card-title">4. Preview (${date}, ${sorted.length} shift(s))</summary>`;
 
     for (const sh of sorted) {
       html += `
@@ -658,7 +666,7 @@
       <div style="margin-top:14px;">
         <button class="btn-primary" onclick="window._shiftImport.submitBatch(this)">Submit ${sorted.length} Shift(s)</button>
       </div>
-    </div>`;
+    </details>`;
 
     const el = document.getElementById('shiftImportPreview');
     el.style.display = '';
@@ -690,14 +698,14 @@
   }
 
   function renderResults(results) {
-    let html = `<div class="settings-card"><div class="settings-card-title">Import Results</div>
+    let html = `<details class="settings-card" open><summary class="settings-card-title">Import Results</summary>
       <table class="nozzle-table" style="width:100%;">
         <tr><th>Shift</th><th>Status</th><th>Detail</th></tr>`;
     for (const r of results) {
       const color = r.status === 'ok' ? 'diff-ok' : r.status === 'skipped-duplicate' ? '' : 'diff-bad';
       html += `<tr><td>${r.label}</td><td class="${color}">${r.status}</td><td>${r.error || ''}</td></tr>`;
     }
-    html += `</table></div>`;
+    html += `</table></details>`;
     const el = document.getElementById('shiftImportResults');
     el.style.display = '';
     el.innerHTML = html;

@@ -770,9 +770,9 @@
 
       <div style="max-width:900px;">
 
-        <div class="settings-card">
-          <div class="settings-card-title">Step 1 — Upload Report Pompiste CSV</div>
-          <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:8px;">
+        <details class="settings-card" open id="shiftImportStep1">
+          <summary class="settings-card-title">1. Upload CSV</summary>
+          <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
             <label class="file-input-label" for="shiftImportFile">
               Choose CSV file
               <input type="file" id="shiftImportFile" accept=".csv" onchange="window._shiftImport.onFileChange(this)">
@@ -784,9 +784,9 @@
             </label>
           </div>
           <div id="shiftImportStatus" class="status-msg" style="margin-top:10px;" aria-live="polite"></div>
-        </div>
+        </details>
 
-        <div id="shiftImportAssign" style="display:none;margin-top:16px;"></div>
+        <div id="shiftImportAssign" style="display:none;"></div>
         <div id="shiftImportPreview" style="display:none;margin-top:16px;"></div>
         <div id="shiftImportResults" style="display:none;margin-top:16px;"></div>
 

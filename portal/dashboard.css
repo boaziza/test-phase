@@ -1307,6 +1307,50 @@ tbody tr:hover td { background: var(--rp-surface-off); }
 #section-shift-import input[type="number"] { width: 100px; text-align: right; }
 #section-shift-import .nozzle-table select { width: 100%; min-width: 220px; }
 
+/* ── Shift Import cards / collapsible steps ── */
+#section-shift-import .settings-card {
+  background: white; border: 1px solid var(--rp-border);
+  border-radius: 10px; padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  margin-bottom: 16px;
+}
+#section-shift-import .settings-card-title {
+  font-size: 13px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--rp-navy);
+}
+#section-shift-import details.settings-card > summary.settings-card-title {
+  margin: -20px -24px 0; padding: 20px 24px;
+  border-bottom: 1px solid transparent;
+  cursor: pointer; list-style: none;
+}
+#section-shift-import details.settings-card[open] > summary.settings-card-title {
+  margin-bottom: 16px; padding-bottom: 12px; border-bottom-color: var(--rp-border);
+}
+#section-shift-import summary::-webkit-details-marker { display: none; }
+#section-shift-import details.settings-card > summary.settings-card-title::after {
+  content: '▾'; float: right; color: var(--rp-muted); font-size: 11px;
+}
+#section-shift-import details.settings-card[open] > summary.settings-card-title::after { content: '▴'; }
+
+#section-shift-import .info-hint {
+  display: inline-block; margin: 0 0 16px;
+}
+#section-shift-import .info-hint summary {
+  cursor: pointer; list-style: none; font-size: 11px; font-weight: 700;
+  color: var(--rp-muted); border: 1px solid var(--rp-border); border-radius: 20px;
+  padding: 2px 10px; display: inline-block;
+}
+#section-shift-import .info-hint p {
+  font-size: 12px; color: var(--rp-muted); line-height: 1.5; margin: 8px 0 0;
+}
+
+#section-shift-import .debug-toggle summary {
+  cursor: pointer; list-style: none; font-size: 12px; font-weight: 700; color: var(--rp-navy);
+}
+#section-shift-import .debug-toggle summary::after { content: ' ▾'; }
+#section-shift-import .debug-toggle[open] summary::after { content: ' ▴'; }
+#section-shift-import .debug-toggle .nozzle-table { margin-top: 12px; }
+
 .section-settings .status-msg { margin-top: 10px; font-size: 12px; font-weight: 600; min-height: 18px; }
 .section-settings .status-msg.success { color: #16a34a; }
 .section-settings .status-msg.error   { color: #dc2626; }
