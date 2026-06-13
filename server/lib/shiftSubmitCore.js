@@ -130,6 +130,7 @@ async function submitShiftCore({ db, ID, Query, DB, ids, data, existingSituation
 
     // ── 5. Loan entries ───────────────────────────────────────────────────────
     for (const item of loans) {
+      const type = item.type === 'momoCorrection' ? 'momoCorrection' : 'fuelCredit';
       const l = await db.createDocument(DB, C_LOANS, ID.unique(), {
         companyId, stationId, email, employeeName,
         shift, logDate, shiftKey, monthYear,
@@ -137,6 +138,9 @@ async function submitShiftCore({ db, ID, Query, DB, ids, data, existingSituation
         amount:       item.amount       || 0,
         customerId:   item.customerId   || '',
         customerName: item.customerName || item.company || '',
+        type,
+        status:    type === 'fuelCredit' ? 'open' : '',
+        paidDate:  '',
       });
       created.push({ col: C_LOANS, id: l.$id });
     }

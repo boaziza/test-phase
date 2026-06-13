@@ -31,10 +31,11 @@
     "initialStock","receivedLitres","venteLitres","theoryStock","physicalStock","gainFuel",
     "totalReceivedPms","totalReceivedAgo","totalGainFuelPms","totalGainFuelAgo",
     "totalVenteLitresPms","totalVenteLitresAgo",
-    "customerName","plate","amount",
+    "customerName","plate","amount","type","status","paidDate",
   ];
 
   const renameMap = {
+    type:"Type",                 status:"Status",          paidDate:"Paid Date",
     employeeName:"Employee",     email:"Email",             logDate:"Date",
     monthYear:"Month",           fuelType:"Fuel Type",      shift:"Shift",
     totalVente:"Total Vente",    totalPayments:"Total Payments", totalCash:"Total Cash",
@@ -63,13 +64,53 @@
   }
 
   function formatValue(key, value) {
-    if (value === null || value === undefined) return "—";
-    if (key === "logDate" && value) {
+    if (value === null || value === undefined || value === "") return "—";
+    if (key === "logDate" || key === "paidDate") {
       const d = new Date(value);
       return isNaN(d) ? String(value).substring(0, 10) : d.toISOString().split("T")[0];
     }
+    if (key === "type") return value === "momoCorrection" ? "MoMo Correction" : "Fuel Credit";
+    if (key === "status") return value === "paid" ? "Paid" : "Open";
     const n = Number(value);
     return isNaN(n) ? String(value) : n.toLocaleString();
+  }
+
+  // ── Loan summary (outstanding totals) ────────────────────────────────────────
+  function renderLoanSummary(rows) {
+    const el = getEl("rep-loanSummary");
+    if (!el) return;
+    if (!rows.length || !("type" in rows[0])) { el.style.display = "none"; return; }
+
+    let outstandingCredit = 0, momoNet = 0;
+    rows.forEach(r => {
+      const amount = Number(r.amount) || 0;
+      if (r.type === "momoCorrection") momoNet += amount;
+      else if (r.status !== "paid") outstandingCredit += amount;
+    });
+
+    el.innerHTML = `
+      <span><strong>Outstanding Fuel Credit:</strong> ${outstandingCredit.toLocaleString()} RWF</span>
+      <span><strong>MoMo Correction Balance:</strong> ${momoNet.toLocaleString()} RWF</span>
+    `;
+    el.style.display = "flex";
+  }
+
+  async function markLoanPaid(id) {
+    try {
+      const { apiFetch } = window._dash;
+      await apiFetch(`/loans/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "paid", paidDate: new Date().toISOString().split("T")[0] }),
+      }).then(r => {
+        if (!r.ok) throw new Error("Request failed");
+        return r.json();
+      });
+      window._dash.toast("Loan marked as paid.", "success");
+      display("loans");
+    } catch (err) {
+      window._dash.toast("Could not update loan: " + err.message, "error");
+    }
   }
 
   function preprocessRows(rows) {
@@ -124,8 +165,12 @@
       const attrs = keys.map(k => ({ key: k, type: typeof raw[0][k] === "number" ? "integer" : "string" }));
 
       _repAttrs    = rearrangeAndRename(attrs);
+      if (tableName === "loans" && raw.length > 0 && "type" in raw[0]) {
+        _repAttrs.push({ key: "_action", displayName: "Action", action: true });
+      }
       _repRows     = preprocessRows(raw);
       _repFiltered = null; _repPage = 1;
+      renderLoanSummary(_repRows);
 
       const searchEl = getEl("rep-search");
       if (searchEl) searchEl.value = "";
@@ -259,9 +304,21 @@
         const tr = document.createElement("tr");
         _repAttrs.forEach((attr, j) => {
           const td = document.createElement("td");
-          td.textContent = formatValue(attr.key, row[attr.key]);
-          const n = Number(row[attr.key]);
-          if (!isNaN(n) && row[attr.key] !== null) { totals[j] += n; hasTotals = true; }
+          if (attr.action) {
+            if (row.type === "fuelCredit" && row.status !== "paid") {
+              const btn = document.createElement("button");
+              btn.className   = "action-btn";
+              btn.textContent = "Mark as paid";
+              btn.onclick     = () => markLoanPaid(row.$id);
+              td.appendChild(btn);
+            } else {
+              td.textContent = "—";
+            }
+          } else {
+            td.textContent = formatValue(attr.key, row[attr.key]);
+            const n = Number(row[attr.key]);
+            if (!isNaN(n) && row[attr.key] !== null && row[attr.key] !== "") { totals[j] += n; hasTotals = true; }
+          }
           tr.appendChild(td);
         });
         body.appendChild(tr);

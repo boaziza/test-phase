@@ -176,6 +176,13 @@
                                     <label for="loan-amount">Amount</label>
                                     <input class="loan" type="number" id="loan-amount" placeholder="e.g. 50000" onkeydown="if(event.key==='Enter'){event.preventDefault();addLoan();}">
                                 </div>
+                                <div class="entry-field">
+                                    <label for="loan-type">Type</label>
+                                    <select class="loan" id="loan-type">
+                                        <option value="fuelCredit">Fuel Credit (company)</option>
+                                        <option value="momoCorrection">MoMo Correction</option>
+                                    </select>
+                                </div>
                                 <div class="entry-actions">
                                     <button type="button" class="action-btn" onclick="addLoan()">Add Loan</button>
                                 </div>

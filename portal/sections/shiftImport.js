@@ -571,7 +571,10 @@
         email: pompiste.email, employeeName: pompiste.name, userId: pompiste.userId,
         nozzleReadings, gainPayments: payments.gainPayments, payments, totals,
         fiche: fiche.map(e => ({ customerName: e.customerName, amount: Math.round(e.amount) })),
-        loans: loans.map(e => ({ customerName: e.customerName, amount: Math.round(e.amount) })),
+        loans: loans.map(e => ({
+          customerName: e.customerName, amount: Math.round(e.amount),
+          type: /momo/i.test(e.customerName || '') ? 'momoCorrection' : 'fuelCredit',
+        })),
       });
     }
 

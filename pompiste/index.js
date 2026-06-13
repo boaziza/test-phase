@@ -424,6 +424,7 @@ async function situation() {
         loans: loans.map(i => ({
           plate: i.plate, amount: i.amount,
           customerId: i.customerId || "", customerName: i.company || "",
+          type: i.type || "fuelCredit",
         })),
       }),
     });
@@ -590,7 +591,8 @@ function renderLoanChips() {
   loans.forEach((item, i) => {
     const chip = document.createElement("span");
     chip.className   = "chip";
-    const label = [item.plate, item.company].filter(Boolean).join(" · ") + ` · ${item.amount.toLocaleString()} RWF`;
+    const typeLabel = item.type === "momoCorrection" ? "MoMo" : "Credit";
+    const label = [item.plate, item.company].filter(Boolean).join(" · ") + ` · ${item.amount.toLocaleString()} RWF · ${typeLabel}`;
     chip.textContent = label;
     chip.style.cursor = "pointer";
     chip.title        = "Click to edit";
@@ -609,10 +611,11 @@ function addLoan() {
   const plate   = document.getElementById("loan-plate").value.trim();
   const company = document.getElementById("loan-company").value.trim();
   const amount  = parseInt(document.getElementById("loan-amount").value);
+  const type    = document.getElementById("loan-type").value;
   if (!plate && !company) { toast("Enter a plate or company", "warning"); return; }
   if (plate && !_plateRegex.test(plate)) { toast("Plate format must be: RAB 123A", "warning"); return; }
   if (!amount || amount === 0) { toast("Enter a valid amount", "warning"); return; }
-  loans.push({ plate: plate ? _normalizePlate(plate) : "", company, amount });
+  loans.push({ plate: plate ? _normalizePlate(plate) : "", company, amount, type });
   renderLoanChips();
   clearLoan();
   document.getElementById("loan-amount").focus();
@@ -623,6 +626,7 @@ function editLoan(i) {
   document.getElementById("loan-plate").value   = item.plate;
   document.getElementById("loan-company").value = item.company;
   document.getElementById("loan-amount").value  = item.amount;
+  document.getElementById("loan-type").value    = item.type || "fuelCredit";
   loans.splice(i, 1);
   renderLoanChips();
   document.getElementById("loan-amount").focus();
