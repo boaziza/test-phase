@@ -1287,8 +1287,18 @@ tbody tr:hover td { background: var(--rp-surface-off); }
   background-repeat: no-repeat; background-position: calc(100% - 10px) center; background-size: 9px;
   padding-right: 28px;
 }
-#section-shift-import input[type="file"] {
-  padding: 5px 8px; cursor: pointer;
+#section-shift-import .file-input-label {
+  background: var(--rp-navy); color: white; border: none;
+  border-radius: var(--rp-r); padding: 9px 16px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background 0.2s, transform 0.15s; white-space: nowrap;
+}
+#section-shift-import .file-input-label:hover { background: var(--rp-blue); transform: translateY(-1px); }
+#section-shift-import .file-input-label input[type="file"] {
+  position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden;
+}
+#section-shift-import .file-input-name {
+  font-size: 12px; color: var(--rp-muted); font-style: italic;
 }
 #section-shift-import input[type="date"],
 #section-shift-import input[type="number"] {

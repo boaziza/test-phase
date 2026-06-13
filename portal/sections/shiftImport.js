@@ -24,6 +24,8 @@
 
     const fileInput = document.getElementById('shiftImportFile');
     if (fileInput) fileInput.value = '';
+    const nameEl = document.getElementById('shiftImportFileName');
+    if (nameEl) nameEl.textContent = 'No file selected';
     document.getElementById('shiftImportAssign').style.display  = 'none';
     document.getElementById('shiftImportPreview').style.display = 'none';
     document.getElementById('shiftImportResults').style.display = 'none';
@@ -228,6 +230,8 @@
   function onFileChange(input) {
     const file = input.files[0];
     if (!file) return;
+    const nameEl = document.getElementById('shiftImportFileName');
+    if (nameEl) nameEl.textContent = file.name;
     const reader = new FileReader();
     reader.onload = () => {
       try { processCsv(reader.result); }

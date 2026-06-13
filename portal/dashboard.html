@@ -773,7 +773,11 @@
         <div class="settings-card">
           <div class="settings-card-title">Step 1 — Upload Report Pompiste CSV</div>
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:8px;">
-            <input type="file" id="shiftImportFile" accept=".csv" onchange="window._shiftImport.onFileChange(this)">
+            <label class="file-input-label" for="shiftImportFile">
+              Choose CSV file
+              <input type="file" id="shiftImportFile" accept=".csv" onchange="window._shiftImport.onFileChange(this)">
+            </label>
+            <span id="shiftImportFileName" class="file-input-name">No file selected</span>
             <label>Report date: <input type="date" id="shiftImportDate"></label>
             <label id="shiftImportStationRow">Station:
               <select id="shiftImportStation"></select>
