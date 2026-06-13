@@ -495,7 +495,48 @@
 
   // ── Preview generation (mirrors scripts/shift_review.html) ─────────────────
 
-  function generatePreview() {
+  function _getPrevDate(dateStr) {
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() - 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  // Checks each shift's nozzle start readings (in shift order) against the
+  // last known end reading for that nozzle — same continuity rule the live
+  // pompiste flow enforces via _checkIndexMatch.
+  async function _checkContinuity(sortedShifts, date) {
+    const stationId = getStationId();
+    const dateBefore = _getPrevDate(date);
+
+    const [todayRes, yesterdayRes] = await Promise.all([
+      window._dash.apiFetch(`/nozzle-readings?station=${stationId}&date=${date}`).then(r => r.json()),
+      window._dash.apiFetch(`/nozzle-readings?station=${stationId}&date=${dateBefore}`).then(r => r.json()),
+    ]);
+    const allReadings = [...(yesterdayRes.readings ?? []), ...(todayRes.readings ?? [])];
+
+    const lastEnd = {};
+    for (const r of allReadings) {
+      if (r.endReading > 0) lastEnd[r.nozzleId] = r.endReading;
+    }
+
+    const issues = [];
+    for (const sh of sortedShifts) {
+      for (const r of sh.nozzleReadings) {
+        const expected = lastEnd[r.nozzleId];
+        if (expected != null && r.startReading !== expected) {
+          issues.push({
+            slot: sh.slot, shift: sh.shift,
+            label: `Pump ${r.pumpNumber} / ${r.fuelType} N${r.nozzleNumber}`,
+            expected, actual: r.startReading,
+          });
+        }
+        lastEnd[r.nozzleId] = r.endReading;
+      }
+    }
+    return issues;
+  }
+
+  async function generatePreview() {
     const date     = document.getElementById('shiftImportDate').value;
     const pmsPrice = Number(document.getElementById('shiftImportPmsPrice').value) || 0;
     const agoPrice = Number(document.getElementById('shiftImportAgoPrice').value) || 0;
@@ -593,7 +634,16 @@
     if (!shifts.length) { _showStatus('Assign at least one slot to a pompiste + shift.', 'error'); return; }
 
     _lastShifts = shifts;
-    renderPreview(shifts, sit, date);
+
+    const sorted = [...shifts].sort((a, b) => SHIFT_ORDER.indexOf(a.shift) - SHIFT_ORDER.indexOf(b.shift));
+    let continuityIssues = [];
+    try {
+      continuityIssues = await _checkContinuity(sorted, date);
+    } catch (e) {
+      _showStatus(`Could not run nozzle continuity check: ${e.message}`, 'error');
+    }
+
+    renderPreview(sorted, sit, date, continuityIssues);
   }
 
   function diffRow(label, key, computed, expected) {
@@ -604,9 +654,8 @@
     return `<tr><td>${label}</td><td class="num">${fmt(computed)}</td><td class="num">${fmt(expected)}</td><td class="${ok ? 'diff-ok' : 'diff-bad'}">${ok ? '✓ match' : '✗ MISMATCH'}</td></tr>`;
   }
 
-  function renderPreview(shifts, sit, date) {
+  function renderPreview(sorted, sit, date, continuityIssues) {
     const expected = _dayTotal || {};
-    const sorted = [...shifts].sort((a, b) => SHIFT_ORDER.indexOf(a.shift) - SHIFT_ORDER.indexOf(b.shift));
 
     let html = `<details class="settings-card" open><summary class="settings-card-title">4. Preview (${date}, ${sorted.length} shift(s))</summary>`;
 
@@ -641,6 +690,18 @@
             </tr>
           </table>
         </div>`;
+    }
+
+    html += `
+      <div class="settings-card-title" style="margin-top:14px;">Nozzle Index Continuity Check</div>`;
+    if (!continuityIssues || continuityIssues.length === 0) {
+      html += `<div class="diff-ok" style="padding:6px 0;">✓ All nozzle start readings match the previous recorded end readings.</div>`;
+    } else {
+      html += `
+        <table class="nozzle-table" style="width:100%;">
+          <tr><th>Slot</th><th>Shift</th><th>Nozzle</th><th>Expected Start (prev end)</th><th>Actual Start</th><th>Check</th></tr>
+          ${continuityIssues.map(i => `<tr><td>${i.slot}</td><td>${i.shift}</td><td>${i.label}</td><td class="num">${fmt(i.expected)}</td><td class="num">${fmt(i.actual)}</td><td class="diff-bad">✗ MISMATCH</td></tr>`).join('')}
+        </table>`;
     }
 
     html += `
