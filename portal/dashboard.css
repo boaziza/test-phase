@@ -1266,6 +1266,37 @@ tbody tr:hover td { background: var(--rp-surface-off); }
   margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--rp-border);
 }
 
+/* ── Shift Import inputs ── */
+#section-shift-import label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: var(--rp-text);
+}
+#section-shift-import input,
+#section-shift-import select {
+  padding: 6px 10px; border: 1.5px solid #cbd5e1; border-radius: 5px;
+  background: white; font-size: 12px; font-family: inherit; color: var(--rp-text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#section-shift-import input:focus,
+#section-shift-import select:focus {
+  border-color: var(--rp-navy); box-shadow: 0 0 0 3px rgba(27,38,59,0.1); outline: none;
+}
+#section-shift-import select {
+  cursor: pointer; -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path fill='%23666' d='M0 0l5 6 5-6z'/></svg>");
+  background-repeat: no-repeat; background-position: calc(100% - 10px) center; background-size: 9px;
+  padding-right: 28px;
+}
+#section-shift-import input[type="file"] {
+  padding: 5px 8px; cursor: pointer;
+}
+#section-shift-import input[type="date"],
+#section-shift-import input[type="number"] {
+  cursor: text;
+}
+#section-shift-import input[type="number"] { width: 100px; text-align: right; }
+#section-shift-import .nozzle-table select { width: 100%; min-width: 220px; }
+
 .section-settings .status-msg { margin-top: 10px; font-size: 12px; font-weight: 600; min-height: 18px; }
 .section-settings .status-msg.success { color: #16a34a; }
 .section-settings .status-msg.error   { color: #dc2626; }

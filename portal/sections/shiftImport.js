@@ -423,8 +423,8 @@
           </tbody>
         </table>
         <div style="display:flex;gap:14px;align-items:center;margin-top:14px;flex-wrap:wrap;">
-          <label>PMS Price: <input type="number" id="shiftImportPmsPrice" value="${_meta.pmsPrice ?? ''}" style="width:100px;"></label>
-          <label>AGO Price: <input type="number" id="shiftImportAgoPrice" value="${_meta.agoPrice ?? ''}" style="width:100px;"></label>
+          <label>PMS Price: <input type="number" id="shiftImportPmsPrice" value="${_meta.pmsPrice ?? ''}"></label>
+          <label>AGO Price: <input type="number" id="shiftImportAgoPrice" value="${_meta.agoPrice ?? ''}"></label>
           <button class="btn-primary" onclick="window._shiftImport.generatePreview()">Generate Preview</button>
         </div>
       </div>`;
